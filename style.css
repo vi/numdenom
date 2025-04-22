@@ -1,0 +1,84 @@
+body {
+    display: grid;
+    grid-template-columns: min-content auto;
+    gap: 3px
+}
+
+#settings {
+    display: flex;
+    flex-wrap: wrap;    
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #eee;
+}
+
+.title2 {
+    height: 24px;
+    font-size: larger;
+    color: darkviolet;
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+    background: #dffc;
+    display: inline-block;
+}
+
+#overallp {
+    height: 24px;
+    font-size: larger;
+    color: darkcyan;
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+    background: rgba(221, 241, 255, 0.8);
+    display: inline-block;
+}
+
+
+#header {
+    display: flex;
+}
+
+#tableandtitle {
+    
+}
+
+#min_denom {
+    max-width: 60px;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+    }
+    #thetable {
+        background-color: #333;
+    }
+
+    #settings {
+        background-color: #333;
+    }
+    div {
+        color: lightgray;
+    }
+    select {
+        background-color: black;
+        color:white;
+    }
+    input {
+        filter: brightness(70%);
+    }
+
+    .title2 {
+        color: rgb(207, 95, 255);
+        background: rgba(9, 37, 37, 0.8);
+    }
+
+    #overallp {
+        color: rgb(0, 238, 238);
+        background: rgba(37, 40, 43, 0.8);
+    }
+    #mainarea.empty {
+        background-color: black;
+    }
+}

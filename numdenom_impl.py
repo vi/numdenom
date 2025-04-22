@@ -6,12 +6,11 @@ import csv
 import json
 import base64
 from collections import defaultdict
+from pathlib import Path
 
 from typing import List, Set, Dict, Any, Tuple
 
-HTML_TEMPLATE=b"<HTML_TEMPLATE>"
-
-
+HTML_TEMPLATE=b"%{html_template}"
 
 def quicktable(inputfile: str, outputfile: str) -> None:
     header_parsed = False
@@ -85,7 +84,8 @@ def quicktable(inputfile: str, outputfile: str) -> None:
                         entry.append(d_nums[xxx])
                     else:
                         entry.append(0.0)
-                    
+                        
+                for xxx in valcolumns:
                     if xxx in d_denoms:
                         entry.append(d_denoms[xxx])
                     else:
@@ -107,7 +107,8 @@ def quicktable(inputfile: str, outputfile: str) -> None:
 
     with open(outputfile, "wt") as of:
         txt : str = base64.standard_b64decode(HTML_TEMPLATE).decode("UTF-8")
-        txt = txt.replace('{INPUT_DATA}', subst)
+        txt = txt.replace('%{data}', subst)
+        txt = txt.replace('%{title}', Path(inputfile).stem)
         of.write(txt)
 
 

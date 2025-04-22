@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title id="title">numdenom: %{title}</title>
+        <meta name="description" content="Interactive numerator/denumerator table viewer based on `%{title}`">
+
+<style>
+%{style}
+</style>
+
+<script>
+    var compressed_data = "data:application/octet-stream;base64,%{data}";
+%{code}
+</script>
+
+    </head>
+
+<body onload="init()">
+    <div id="settings">
+        
+           <label for="min_denom">Min denom:</label>
+           <input type="number" value="0.001" id="min_denom" name="min_denom" onchange="build_main_table()">
+        
+    </div>
+    <div id="tableandtitle">
+        <div id="header">
+            <div class="title2">
+                %{title}
+            </div>
+        </div>
+        <table id="mainarea">
+            <thead>
+                <tr id="totperc_row">
+                <tr id="avgs_row">
+                </tr>
+                <tr id="column_headers">
+                </tr>
+            </thead>
+            <tbody id="the_rows">
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
