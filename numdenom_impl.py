@@ -53,6 +53,9 @@ def quicktable(inputfile: str, outputfile: str) -> None:
                     h = header[i]
 
                     if h.endswith("_num"):
+                        x = x.strip()
+                        if x == "" or x == "NULL":
+                            continue
                         try:
                             v = float(x)
                         except:
@@ -60,6 +63,9 @@ def quicktable(inputfile: str, outputfile: str) -> None:
                             sys.exit(2)
                         d_nums[h.removesuffix("_num")] = v
                     elif h.endswith("_denom"):
+                        x = x.strip()
+                        if x == "" or x == "NULL":
+                            continue
                         try:
                             v = float(x)
                         except:
@@ -80,13 +86,13 @@ def quicktable(inputfile: str, outputfile: str) -> None:
                         entry.append("NULL")
                 
                 for xxx in valcolumns:
-                    if xxx in d_nums:
+                    if xxx in d_nums and xxx in d_denoms:
                         entry.append(d_nums[xxx])
                     else:
                         entry.append(0.0)
-                        
+
                 for xxx in valcolumns:
-                    if xxx in d_denoms:
+                    if xxx in d_denoms and xxx in d_denoms:
                         entry.append(d_denoms[xxx])
                     else:
                         entry.append(0.0)

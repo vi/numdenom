@@ -21,6 +21,7 @@ body {
     padding: 2px;
     background: #dffc;
     display: inline-block;
+    width: 100%;
 }
 
 #overallp {
@@ -40,11 +41,27 @@ body {
 }
 
 #tableandtitle {
-    
+    overflow-y: scroll;
+    height: 100vh;
+}
+
+#column_headers {
+    position: sticky;
+    top: 0px;
+    background: white;
 }
 
 #min_denom {
     max-width: 60px;
+}
+
+#totperc_row {
+    font-size: small;
+}
+
+td {
+    text-align: right;
+    font-variant: tabular-nums;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -80,5 +97,8 @@ body {
     }
     #mainarea.empty {
         background-color: black;
+    }
+    #column_headers {
+        background: black
     }
 }

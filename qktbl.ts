@@ -67,6 +67,7 @@ function build_main_table() {
         if (setting_selector.value === "_COL") {
             let n = document.createElement("th");
             n.textContent = s.name;
+            n.scope="col";
             colheads.appendChild(n);
 
             promoted_filters_n+=1;
@@ -76,6 +77,7 @@ function build_main_table() {
     for (const s of window.content.values) {
         let n = document.createElement("th");
         n.textContent = s;
+        n.scope="col";
         colheads.appendChild(n);
 
         total_denoms.push(0)
