@@ -17,6 +17,7 @@ interface Window {
     content: Content;
 }
 
+const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ?? false;
 
 const decompress = async (url) => {
     // @ts-ignore
@@ -54,6 +55,7 @@ function build_main_table() {
     let filter_policies = []
 
     let total_denoms = []
+    let filtered_nums = []
     let filtered_denoms = []
 
     let min_denom = (document.getElementById("min_denom") as HTMLInputElement).valueAsNumber
@@ -81,6 +83,7 @@ function build_main_table() {
         colheads.appendChild(n);
 
         total_denoms.push(0)
+        filtered_nums.push(0)
         filtered_denoms.push(0)
     }
 
@@ -91,27 +94,6 @@ function build_main_table() {
 
     let rows = document.getElementById("the_rows") as HTMLTableSectionElement
     rows.replaceChildren()
-
-    function append_row(rr: IRowInfo) {
-        let tr = document.createElement("tr")
-        for (let k = 0; k<promoted_filters_n; k+=1) {
-            let td = document.createElement("td")
-            td.textContent = rr.promoted_filters[k]
-            tr.appendChild(td)
-        }
-        for (let j = 0; j<nvalues; j+=1) {
-            let td = document.createElement("td")
-
-            if (rr.denoms[j] > min_denom) {
-                let x = rr.nums[j] / rr.denoms[j];
-                td.textContent = `${x.toFixed(2)}`
-            } else {
-                td.textContent = ""
-            }
-            tr.appendChild(td)
-        }
-        rows.appendChild(tr)
-    }
 
     let db : Map<string, RowInfo> = new Map();
 
@@ -157,6 +139,7 @@ function build_main_table() {
         for (let j = 0; j<nvalues; j+=1) {
             let v = +d[nfilters + j];
             cursor.nums[j] += v;
+            filtered_nums[j] += v;
         }
         for (let j = 0; j<nvalues; j+=1) {
             let v = +d[nfilters + nvalues + j];
@@ -184,11 +167,63 @@ function build_main_table() {
         }
     }
 
-    console.log(keys)
+    //console.log(keys)
+
+    let mins=new Array(nvalues).fill(Infinity);
+    let maxes=new Array(nvalues).fill(-Infinity);
+
+    for (const [k, rr] of db) {
+        for (let j = 0; j<nvalues; j+=1) {
+            if (rr.denoms[j] > min_denom) {
+                let x = rr.nums[j] / rr.denoms[j];
+                if (x < mins[j]) mins[j] = x;
+                if (x > maxes[j]) maxes[j] = x;
+            } 
+        }
+    }
+
 
     for (let k of keys) {
         if (db.has(k)) {
-            append_row(db.get(k))
+            let rr = db.get(k)
+
+            let tr = document.createElement("tr")
+            for (let k = 0; k<promoted_filters_n; k+=1) {
+                let td = document.createElement("td")
+                td.textContent = rr.promoted_filters[k]
+                tr.appendChild(td)
+            }
+            for (let j = 0; j<nvalues; j+=1) {
+                let td = document.createElement("td")
+    
+                if (rr.denoms[j] > min_denom) {
+                    let x = rr.nums[j] / rr.denoms[j];
+                    td.textContent = `${x.toFixed(2)}`
+    
+                    let q = (x - mins[j] + 0.000005) / (maxes[j] - mins[j] + 0.00001)
+                    if (q>1.0) q=1.0;
+                    if (q<0.0) q=0.0;
+
+                    let l
+                    if (darkMode) {
+                        l=15+70*(q - 0.5)*(q-0.5)
+                    } else {
+                        l=100.0 - 70*(q - 0.5)*(q-0.5)
+                    }
+                    let c=100*(q - 0.5)*(q-0.5)
+                    let h;
+                    if (j % 2 == 0) {
+                        h= (q>0.5) ? 0 : 210;
+                    } else  {
+                        h= (q>0.5) ? 70 : 170;
+                    }
+                    td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
+                } else {
+                    td.textContent = ""
+                }
+                tr.appendChild(td)
+            }
+            rows.appendChild(tr)
         }
     }
 
@@ -210,6 +245,26 @@ function build_main_table() {
         }
         totperc_row.appendChild(td)
     }
+
+    let avgs_row = document.getElementById("avgs_row") as HTMLTableRowElement;
+    avgs_row.replaceChildren()
+
+    for (let j=0; j<promoted_filters_n; j+=1) {
+        avgs_row.appendChild(document.createElement("td"))
+    }
+    for (let j=0; j<nvalues; j+=1) {
+
+        let td = document.createElement("td")
+
+        if (filtered_denoms[j] > min_denom) {
+            let x = 1.0*filtered_nums[j] / filtered_denoms[j];
+            td.textContent = `${x.toFixed(2)}`
+        } else {
+            td.textContent = ""
+        }
+        avgs_row.appendChild(td)
+    }
+
     
 }
 
