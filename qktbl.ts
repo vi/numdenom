@@ -319,6 +319,13 @@ function build_main_table() {
 
 
 function build_settings_pane() {
+    let default_values: Map<string, string> = new Map()
+
+    for (const x of window.location.hash.substring(1).split('&')) {
+        const a = x.split('=')
+        default_values.set(a[0], a[1])
+    }
+
     let settings = document.getElementById("settings") as HTMLDivElement;
     
     for (const s of window.content.filters) {
@@ -352,6 +359,10 @@ function build_settings_pane() {
             slct.appendChild(opt)
         }
 
-        slct.value = "*"
+        if (default_values.has(name)) {
+            slct.value = default_values.get(name)
+        } else {
+            slct.value = "*"
+        }
     }
 }
