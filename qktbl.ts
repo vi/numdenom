@@ -47,6 +47,17 @@ interface IRowInfo {
 }
 type RowInfo = IRowInfo
 
+let high_contrast_colorisations : Set<string> = new Set()
+
+function handle_highcontrast_checkbox(name: string) {
+    if (high_contrast_colorisations.has(name)) {
+        high_contrast_colorisations.delete(name)
+    } else {
+        high_contrast_colorisations.add(name)
+    }
+    build_main_table()
+}
+
 function build_main_table() {
     let colheads = document.getElementById("column_headers") as HTMLTableRowElement;
 
@@ -57,6 +68,7 @@ function build_main_table() {
     let total_denoms = []
     let filtered_nums = []
     let filtered_denoms = []
+    let highcontrast = []
 
     let min_denom = (document.getElementById("min_denom") as HTMLInputElement).valueAsNumber
 
@@ -78,8 +90,21 @@ function build_main_table() {
 
     for (const s of window.content.values) {
         let n = document.createElement("th");
-        n.textContent = s;
+        
         n.scope="col";
+
+        let lbl = document.createElement("label")
+        let chk = document.createElement("input")
+        chk.type="checkbox"
+        highcontrast.push(high_contrast_colorisations.has(s))
+        chk.checked = high_contrast_colorisations.has(s)
+        chk.onchange =  function() { 
+            handle_highcontrast_checkbox(s)
+        }
+        lbl.textContent = s;
+
+        lbl.appendChild(chk)
+        n.appendChild(lbl)
         colheads.appendChild(n);
 
         total_denoms.push(0)
@@ -204,13 +229,37 @@ function build_main_table() {
                     if (q>1.0) q=1.0;
                     if (q<0.0) q=0.0;
 
+                    let qq = 0.5*Math.abs(q-0.5)
+
                     let l
                     if (darkMode) {
-                        l=15+70*(q - 0.5)*(q-0.5)
+                        if (highcontrast[j]) {
+                            l=10+70*qq
+                        } else {
+                            l=0 + 50*qq
+                        }
                     } else {
-                        l=100.0 - 70*(q - 0.5)*(q-0.5)
+                        if (highcontrast[j]) {
+                            l=100.0 - 90*qq
+                        } else {
+                            l=100
+                        }
                     }
-                    let c=100*(q - 0.5)*(q-0.5)
+                    let c;
+
+                    if (darkMode) {
+                        if (highcontrast[j]) {
+                            c = 400*qq
+                        } else {
+                            c = 140*qq
+                        }
+                    } else {
+                        if (highcontrast[j]) {
+                            c = 240*qq
+                        } else {
+                            c = 30*qq
+                        }
+                    }
                     let h;
                     if (j % 2 == 0) {
                         h= (q>0.5) ? 0 : 210;
