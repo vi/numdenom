@@ -329,7 +329,7 @@ function build_settings_pane() {
 
     for (const x of window.location.hash.substring(1).split('&')) {
         const a = x.split('=')
-        default_values.set(a[0], a[1])
+        default_values.set(decodeURIComponent(a[0]), decodeURIComponent(a[1]))
     }
 
     let settings = document.getElementById("settings") as HTMLDivElement;
