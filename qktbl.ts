@@ -222,7 +222,9 @@ function build_main_table() {
                 let td = document.createElement("td")
     
                 if (rr.denoms[j] > min_denom) {
-                    let x = rr.nums[j] / rr.denoms[j];
+                    let num = rr.nums[j]
+                    let denom = rr.denoms[j]
+                    let x = num / denom
                     td.textContent = `${x.toFixed(2)}`
     
                     let q = (x - mins[j] + 0.000005) / (maxes[j] - mins[j] + 0.00001)
@@ -267,6 +269,7 @@ function build_main_table() {
                         h= (q>0.5) ? 70 : 170;
                     }
                     td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
+                    td.setAttribute("title", `${num} / ${denom}`);
                 } else {
                     td.textContent = ""
                 }
@@ -306,8 +309,11 @@ function build_main_table() {
         let td = document.createElement("td")
 
         if (filtered_denoms[j] > min_denom) {
-            let x = 1.0*filtered_nums[j] / filtered_denoms[j];
+            let num = filtered_nums[j]
+            let denom = filtered_denoms[j]
+            let x = 1.0*num/denom
             td.textContent = `${x.toFixed(2)}`
+            td.setAttribute("title", `${num} / ${denom}`);
         } else {
             td.textContent = ""
         }
