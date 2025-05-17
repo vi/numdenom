@@ -34,7 +34,7 @@ $ ./numdenom.py sample.csv sample.html
 4. Within the generated page, render all filter columns as comboboxes on the left side. Each change of the filter settings recalculate the table.
 5. For each value column, calculate the cell value by summing all `_num` values, then dividing it by the sum of `_denom` values. Rows not matching the filter settings are excluded from the sums. Special filter setting value `_COL` promotes filter column to show all its values separately as individual rows.
 
-Value columns are sorted lexicographically. Content of filter columns is also sorted lexicographically.
+Value columns are sorted lexicographically. Content of filter columns is also sorted lexicographically. Order of the columns or rows within the CSV file does not matter.
 
 ## Additional features
 
