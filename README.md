@@ -48,6 +48,6 @@ Value columns are sorted lexicographically. Content of filter columns is also so
 
 ## Building and running.
 
-You can download a pre-built `numdenom.py` from Github releases. The script is expected to depend only on Python's standard library.
+You can download a pre-built `numdenom.py` from Github releases. The script is self-contained and is expected to depend only on Python's standard library.
 
-Building `numdenom.py` requires Make and Typescript to be available.
+Building `numdenom.py` requires Make and Typescript to be available and is performed by running `make` in the source code directory.
