@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title id="title">numdenom: sample</title>
+        <meta name="description" content="Interactive numerator/denumerator table viewer based on `sample`">
+
+<style>
+body {
+    display: grid;
+    grid-template-columns: min-content auto;
+    gap: 3px
+}
+
+#settings {
+    display: flex;
+    flex-wrap: wrap;    
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #eee;
+}
+
+.title2 {
+    height: 24px;
+    font-size: larger;
+    color: darkviolet;
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+    background: #dffc;
+    display: inline-block;
+    width: 100%;
+}
+
+#overallp {
+    height: 24px;
+    font-size: larger;
+    color: darkcyan;
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+    background: rgba(221, 241, 255, 0.8);
+    display: inline-block;
+}
+
+
+#header {
+    display: flex;
+}
+
+#tableandtitle {
+    overflow-y: scroll;
+    height: 100vh;
+}
+
+#column_headers {
+    position: sticky;
+    top: 0px;
+    background: white;
+}
+
+#min_denom {
+    max-width: 60px;
+}
+
+#totperc_row {
+    font-size: small;
+}
+
+td {
+    text-align: right;
+    font-variant: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+    }
+    #thetable {
+        background-color: #333;
+    }
+
+    #settings {
+        background-color: #333;
+    }
+    div {
+        color: lightgray;
+    }
+    select {
+        background-color: black;
+        color:white;
+    }
+    input {
+        filter: brightness(70%);
+    }
+
+    .title2 {
+        color: rgb(207, 95, 255);
+        background: rgba(9, 37, 37, 0.8);
+    }
+
+    #overallp {
+        color: rgb(0, 238, 238);
+        background: rgba(37, 40, 43, 0.8);
+    }
+    #mainarea.empty {
+        background-color: black;
+    }
+    #column_headers {
+        background: black
+    }
+}
+
+</style>
+
+<script>
+    var compressed_data = "data:application/octet-stream;base64,H4sIAPsCKGgC/22Q3QrCMAyFX6Xkeoz+Cvoq0ouKE4QpTKudjL27TdattHpzSJMvyWkmuFx73z2ecGDHCe7u1sUIHDQM3q6nNAzDgO8QAti5YRk7FZjn+PSCVJIqUk1qYrNd+Fe3dIxY+ABmz847zG3baJpqecMkikYxLY9sRsSKiFQluEDQB1U5CsG7CkGTulykKwR/wDeEpuwTgldZ7eYda1Qg4hfRFSIhF5LxGlGFl7+LDOTefBxr5y8u3kMI7wEAAA==";
+const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ?? false;
+const decompress = async (url) => {
+    // @ts-ignore
+    const ds = new DecompressionStream('gzip');
+    const response = await fetch(url);
+    const blob_in = await response.blob();
+    const stream_in = blob_in.stream().pipeThrough(ds);
+    const blob_out = await new Response(stream_in).blob();
+    return await blob_out.text();
+};
+function init() {
+    let cdata = window.compressed_data;
+    decompress(cdata).then((result) => {
+        window.content = JSON.parse(result);
+        build_settings_pane();
+        build_main_table();
+    });
+}
+let high_contrast_colorisations = new Set();
+function handle_highcontrast_checkbox(name) {
+    if (high_contrast_colorisations.has(name)) {
+        high_contrast_colorisations.delete(name);
+    }
+    else {
+        high_contrast_colorisations.add(name);
+    }
+    build_main_table();
+}
+function build_main_table() {
+    let colheads = document.getElementById("column_headers");
+    colheads.replaceChildren();
+    let filter_policies = [];
+    let total_denoms = [];
+    let filtered_nums = [];
+    let filtered_denoms = [];
+    let highcontrast = [];
+    let min_denom = document.getElementById("min_denom").valueAsNumber;
+    let promoted_filters_n = 0;
+    for (const s of window.content.filters) {
+        let setting_selector = document.getElementById(`set_${s.name}`);
+        filter_policies.push(setting_selector.value);
+        if (setting_selector.value === "_COL") {
+            let n = document.createElement("th");
+            n.textContent = s.name;
+            n.scope = "col";
+            colheads.appendChild(n);
+            promoted_filters_n += 1;
+        }
+    }
+    for (const s of window.content.values) {
+        let n = document.createElement("th");
+        n.scope = "col";
+        let lbl = document.createElement("label");
+        let chk = document.createElement("input");
+        chk.type = "checkbox";
+        highcontrast.push(high_contrast_colorisations.has(s));
+        chk.checked = high_contrast_colorisations.has(s);
+        chk.onchange = function () {
+            handle_highcontrast_checkbox(s);
+        };
+        lbl.textContent = s;
+        lbl.appendChild(chk);
+        n.appendChild(lbl);
+        colheads.appendChild(n);
+        total_denoms.push(0);
+        filtered_nums.push(0);
+        filtered_denoms.push(0);
+    }
+    let nfilters = filter_policies.length;
+    let nvalues = window.content.values.length;
+    let first_data_row = true;
+    let rows = document.getElementById("the_rows");
+    rows.replaceChildren();
+    let db = new Map();
+    for (const d of window.content.data) {
+        let promoted_filters = [];
+        let matches_filter = true;
+        for (let i = 0; i < nfilters; i += 1) {
+            let fv = d[i];
+            if (filter_policies[i] !== "*" && filter_policies[i] != "_COL" && filter_policies[i] != fv) {
+                matches_filter = false;
+            }
+        }
+        for (let j = 0; j < nvalues; j += 1) {
+            let v = d[nfilters + nvalues + j];
+            total_denoms[j] += v;
+        }
+        if (!matches_filter) {
+            continue;
+        }
+        for (let i = 0; i < nfilters; i += 1) {
+            let fv = d[i];
+            if (filter_policies[i] == "_COL") {
+                promoted_filters.push(fv);
+            }
+        }
+        let key = promoted_filters.join("|");
+        let cursor;
+        if (db.has(key)) {
+            cursor = db.get(key);
+        }
+        else {
+            cursor = {
+                promoted_filters: promoted_filters,
+                nums: new Array(nvalues).fill(0),
+                denoms: new Array(nvalues).fill(0),
+            };
+        }
+        for (let j = 0; j < nvalues; j += 1) {
+            let v = +d[nfilters + j];
+            cursor.nums[j] += v;
+            filtered_nums[j] += v;
+        }
+        for (let j = 0; j < nvalues; j += 1) {
+            let v = +d[nfilters + nvalues + j];
+            cursor.denoms[j] += v;
+            filtered_denoms[j] += v;
+        }
+        db.set(key, cursor);
+    }
+    let keys = [""];
+    for (let i = 0; i < nfilters; i += 1) {
+        if (filter_policies[i] === "_COL") {
+            let newkeys = [];
+            for (let x of window.content.filters[i].vals) {
+                for (let k of keys) {
+                    if (k.length === 0) {
+                        newkeys.push(x);
+                    }
+                    else {
+                        newkeys.push(`${k}|${x}`);
+                    }
+                }
+            }
+            keys = newkeys;
+        }
+    }
+    //console.log(keys)
+    let mins = new Array(nvalues).fill(Infinity);
+    let maxes = new Array(nvalues).fill(-Infinity);
+    for (const [k, rr] of db) {
+        for (let j = 0; j < nvalues; j += 1) {
+            if (rr.denoms[j] > min_denom) {
+                let x = rr.nums[j] / rr.denoms[j];
+                if (x < mins[j])
+                    mins[j] = x;
+                if (x > maxes[j])
+                    maxes[j] = x;
+            }
+        }
+    }
+    for (let k of keys) {
+        if (db.has(k)) {
+            let rr = db.get(k);
+            let tr = document.createElement("tr");
+            for (let k = 0; k < promoted_filters_n; k += 1) {
+                let td = document.createElement("td");
+                td.textContent = rr.promoted_filters[k];
+                tr.appendChild(td);
+            }
+            for (let j = 0; j < nvalues; j += 1) {
+                let td = document.createElement("td");
+                if (rr.denoms[j] > min_denom) {
+                    let num = rr.nums[j];
+                    let denom = rr.denoms[j];
+                    let x = num / denom;
+                    td.textContent = `${x.toFixed(2)}`;
+                    let q = (x - mins[j] + 0.000005) / (maxes[j] - mins[j] + 0.00001);
+                    if (q > 1.0)
+                        q = 1.0;
+                    if (q < 0.0)
+                        q = 0.0;
+                    let qq = 0.5 * Math.abs(q - 0.5);
+                    let l;
+                    if (darkMode) {
+                        if (highcontrast[j]) {
+                            l = 10 + 70 * qq;
+                        }
+                        else {
+                            l = 0 + 50 * qq;
+                        }
+                    }
+                    else {
+                        if (highcontrast[j]) {
+                            l = 100.0 - 90 * qq;
+                        }
+                        else {
+                            l = 100;
+                        }
+                    }
+                    let c;
+                    if (darkMode) {
+                        if (highcontrast[j]) {
+                            c = 400 * qq;
+                        }
+                        else {
+                            c = 140 * qq;
+                        }
+                    }
+                    else {
+                        if (highcontrast[j]) {
+                            c = 240 * qq;
+                        }
+                        else {
+                            c = 30 * qq;
+                        }
+                    }
+                    let h;
+                    if (j % 2 == 0) {
+                        h = (q > 0.5) ? 0 : 210;
+                    }
+                    else {
+                        h = (q > 0.5) ? 70 : 170;
+                    }
+                    td.setAttribute("style", `background-color: lch(${l} ${c} ${h})`);
+                    td.setAttribute("title", `${num} / ${denom}`);
+                }
+                else {
+                    td.textContent = "";
+                }
+                tr.appendChild(td);
+            }
+            rows.appendChild(tr);
+        }
+    }
+    let totperc_row = document.getElementById("totperc_row");
+    totperc_row.replaceChildren();
+    for (let j = 0; j < promoted_filters_n; j += 1) {
+        totperc_row.appendChild(document.createElement("td"));
+    }
+    for (let j = 0; j < nvalues; j += 1) {
+        let td = document.createElement("td");
+        if (total_denoms[j] > min_denom) {
+            let x = 100.0 * filtered_denoms[j] / total_denoms[j];
+            td.textContent = `${x.toFixed(2)}%`;
+        }
+        else {
+            td.textContent = "-";
+        }
+        totperc_row.appendChild(td);
+    }
+    let avgs_row = document.getElementById("avgs_row");
+    avgs_row.replaceChildren();
+    for (let j = 0; j < promoted_filters_n; j += 1) {
+        avgs_row.appendChild(document.createElement("td"));
+    }
+    for (let j = 0; j < nvalues; j += 1) {
+        let td = document.createElement("td");
+        if (filtered_denoms[j] > min_denom) {
+            let num = filtered_nums[j];
+            let denom = filtered_denoms[j];
+            let x = 1.0 * num / denom;
+            td.textContent = `${x.toFixed(2)}`;
+            td.setAttribute("title", `${num} / ${denom}`);
+        }
+        else {
+            td.textContent = "";
+        }
+        avgs_row.appendChild(td);
+    }
+}
+function build_settings_pane() {
+    let default_values = new Map();
+    for (const x of window.location.hash.substring(1).split('&')) {
+        const a = x.split('=');
+        default_values.set(decodeURIComponent(a[0]), decodeURIComponent(a[1]));
+    }
+    let settings = document.getElementById("settings");
+    for (const s of window.content.filters) {
+        let name = s.name;
+        let lbl = document.createElement("label");
+        lbl.textContent = name;
+        lbl.setAttribute("for", `set_${name}`);
+        settings.appendChild(lbl);
+        let slct = document.createElement("select");
+        slct.setAttribute("name", `set_${name}`);
+        slct.setAttribute("id", `set_${name}`);
+        slct.onchange = () => build_main_table();
+        settings.appendChild(slct);
+        let col_opt = document.createElement("option");
+        col_opt.setAttribute("value", "_COL");
+        col_opt.textContent = "_COL";
+        slct.appendChild(col_opt);
+        let all_opt = document.createElement("option");
+        all_opt.setAttribute("value", "*");
+        all_opt.textContent = "*";
+        slct.appendChild(all_opt);
+        for (const v of s.vals) {
+            let opt = document.createElement("option");
+            opt.setAttribute("value", v);
+            opt.textContent = v;
+            slct.appendChild(opt);
+        }
+        if (default_values.has(name)) {
+            slct.value = default_values.get(name);
+        }
+        else {
+            slct.value = "*";
+        }
+    }
+}
+
+</script>
+
+    </head>
+
+<body onload="init()">
+    <div id="settings">
+        
+           <label for="min_denom">Min denom:</label>
+           <input type="number" value="0.001" id="min_denom" name="min_denom" onchange="build_main_table()">
+        
+    </div>
+    <div id="tableandtitle">
+        <div id="header">
+            <div class="title2">
+                sample
+            </div>
+        </div>
+        <table id="mainarea">
+            <thead>
+                <tr id="totperc_row">
+                <tr id="avgs_row">
+                </tr>
+                <tr id="column_headers">
+                </tr>
+            </thead>
+            <tbody id="the_rows">
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
