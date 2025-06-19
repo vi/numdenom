@@ -56,6 +56,7 @@ interface IRowInfo {
 type RowInfo = IRowInfo
 
 let high_contrast_colorisations : Set<string> = new Set()
+let relative_N : boolean = false
 
 function handle_highcontrast_checkbox(name: string) {
     if (high_contrast_colorisations.has(name)) {
@@ -257,7 +258,12 @@ function build_main_table() {
                 let td = document.createElement("td");
                 let x = rr.values[main_denom]
 
-                td.textContent = `${x}`
+                if (relative_N) {
+                    let xx = 100.0*(x + 0.000005) / (filtered_values[main_denom] + 0.00001)
+                    td.textContent = `${xx.toFixed(2)}`
+                } else {
+                    td.textContent = `${x}`
+                }
 
                 let q = (x + 0.000005) / (maxes[N_index] + 0.00001)
                 if (q>1.0) q=1.0;
@@ -358,7 +364,23 @@ function build_main_table() {
         totperc_row.appendChild(document.createElement("td"))
     }
     if (main_denom != null) {
-        totperc_row.appendChild(document.createElement("td"))
+        let n = document.createElement("td")
+        totperc_row.appendChild(n)
+
+        n.scope="col";
+
+        let lbl = document.createElement("label")
+        let chk = document.createElement("input")
+        chk.type="checkbox"
+        chk.checked = relative_N
+        chk.onchange =  function() { 
+            relative_N = !relative_N
+            build_main_table()
+        }
+        lbl.textContent = "%";
+
+        lbl.appendChild(chk)
+        n.appendChild(lbl)
     }
     for (let j=0; j<nvalues; j+=1) {
 
@@ -380,7 +402,9 @@ function build_main_table() {
         avgs_row.appendChild(document.createElement("td"))
     }
     if (main_denom != null) {
-        avgs_row.appendChild(document.createElement("td"))
+        let td = document.createElement("td")
+        avgs_row.appendChild(td)
+        td.textContent = `${filtered_values[main_denom]}`
     }
     for (let j=0; j<nvalues; j+=1) {
 
