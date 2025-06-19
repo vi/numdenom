@@ -277,9 +277,11 @@ function build_main_table() {
                 let c
                 if (darkMode) {
                     if (highcontrast[N_index]) {
-                        l=10+70*q
+                        l=5+50*q
+                        c=80*q
                     } else {
-                        l=0 + 50*q
+                        l=2 + 15*q
+                        c=60*q
                     }
                 } else {
                     if (highcontrast[N_index]) {

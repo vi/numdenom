@@ -63,6 +63,9 @@ td {
     text-align: right;
     font-variant: tabular-nums;
 }
+select {
+    max-width: 100px;
+}
 
 @media (prefers-color-scheme: dark) {
     body {
