@@ -18,7 +18,7 @@
     </head>
 
 <body onload="init()">
-    <div id="all_settings" class="settings">
+    <nav id="all_settings" class="settings">
         <label for="min_denom">Min denom:</label>
         <input type="number" value="0.001" id="min_denom" name="min_denom" onchange="build_main_table()">
         
@@ -35,22 +35,26 @@
                 <option value="lin">lin</option>
                 <option value="ln">ln</option>
                 <option value="sqrt">sqrt</option>
+                <option value="cbrt">cbrt</option>
                 <option value="atan">atan</option>
+                <option value="atan1000">atan1000</option>
             </select>
             <label for="ch_width">width:</label>
-            <input type="number" value="1000" id="ch_width" name="ch_width" onchange="build_main_table()">
+            <input type="number" value="500" id="ch_width" name="ch_width" onchange="build_main_table()">
             <label for="ch_min">min:</label>
             <input type="number" value="" id="ch_min" name="ch_min" onchange="build_main_table()">
             <label for="ch_max">max:</label>
             <input type="number" value="" id="ch_max" name="ch_max" onchange="build_main_table()">
+            <label for="ch_line">line:</label>
+            <input type="number" value="" id="ch_line" name="ch_line" onchange="build_main_table()">
         </div>
-    </div>
-    <div id="tableandtitle">
-        <div id="header">
+    </nav>
+    <main id="tableandtitle">
+        <header id="header">
             <div class="title2">
                 %{title}
             </div>
-        </div>
+        </header>
         <table id="mainarea">
             <thead>
                 <tr id="totperc_row">
@@ -62,6 +66,6 @@
             <tbody id="the_rows">
             </tbody>
         </table>
-    </div>
+    </main>
 </body>
 </html>

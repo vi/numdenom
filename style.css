@@ -69,6 +69,56 @@ select {
     max-width: 100px;
 }
 
+.ch_container {
+
+}
+.ch_container2 {
+    display: inline-flex;
+    width: 100%;
+    flex-direction: row;
+    position: relative;
+}
+.ch_zero, .ch_line, .ch_bar {
+    position: absolute;
+    top: 0px;
+    min-height: 16px;
+}
+.ch_zero, .ch_line {
+    z-index: 2;
+}
+.ch_zero {
+    width: 1px;
+    background-color: black;
+}
+
+.ch_line {
+    width: 2px;
+    background-color: green;
+}
+
+.ch_pos {
+    background-color: rgb(121, 121, 121);
+}
+.ch_pos_over {
+    background-color: rgb(228, 182, 182);
+}
+.ch_pos_over_invisible {
+    background-color: rgb(255, 236, 236);
+}
+
+.ch_neg {
+    background-color: rgb(114, 112, 143);
+}
+.ch_neg_over {
+    background-color: rgb(206, 210, 241);
+}
+.ch_neg_over_invisible {
+    background-color: rgb(236, 236, 255);
+}
+.ch_missing {
+    background-color: lightgray;
+}
+
 @media (prefers-color-scheme: dark) {
     body {
         background-color: black;
