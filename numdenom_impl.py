@@ -58,11 +58,13 @@ def quicktable(inputfile: str, outputfile: str, table_title: str) -> None:
                         first_unused_value_index+=1
                     else:
                         filters_tmp.add(x)
-                        filter_indexes[x] = first_unused_filter_index
-                        first_unused_filter_index+=1
                 header_parsed = True
                 filters = sorted(list(filters_tmp))
                 valcolumns = sorted(list(valcolumns_tmp))
+
+                for ffff in filters:
+                    filter_indexes[ffff] = first_unused_filter_index
+                    first_unused_filter_index+=1
                 #print(filters, valcolumns)
             else:
                 # iterated csv row is not the header

@@ -161,7 +161,7 @@ function build_main_table() {
         let matches_filter = true
         for (let i = 0; i<nfilters; i+=1) {
             let fv = filter_row[i];
-            
+
             if (filter_policies[i] !== "*" && filter_policies[i] != "_COL" && filter_policies[i] != fv) {
                 matches_filter = false
             }
@@ -245,7 +245,7 @@ function build_main_table() {
     for (let k of keys) {
         if (db.has(k)) {
             let rr = db.get(k)
-            console.log(rr)
+            //console.log(rr)
 
             let tr = document.createElement("tr")
             for (let k = 0; k<promoted_filters_n; k+=1) {
