@@ -36,7 +36,7 @@
                 <option value="ln">ln</option>
                 <option value="sqrt">sqrt</option>
                 <option value="cbrt">cbrt</option>
-                <option value="atan">atan</option>
+                <option value="atan10">atan10</option>
                 <option value="atan1000">atan1000</option>
             </select>
             <label for="ch_width">width:</label>

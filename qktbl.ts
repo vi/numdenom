@@ -112,8 +112,8 @@ function build_main_table() {
         case "cbrt":
             ch_filter = x => Math.cbrt(x)
             break
-        case "atan":
-            ch_filter = x => Math.atan(x)
+        case "atan10":
+            ch_filter = x => Math.atan(x*0.1)
             break
         case "atan1000":
             ch_filter = x => Math.atan(x*0.001)
@@ -498,7 +498,7 @@ function build_main_table() {
 
                 let x : number = ch_x
 
-                if (x >= 0 && ch_max>=0) {
+                if (x >= 0 && ch_max>0) {
                     x = ch_filter(x)
                     let tip = (x - ch_min + 0.000005) / (ch_max - ch_min + 0.00001) * ch_width
                     let w
@@ -516,9 +516,9 @@ function build_main_table() {
                     z.classList.add("ch_bar")
                     z.setAttribute('style', `left: ${zero_left}px; width: ${w}px`)
                     nn.appendChild(z)
-                } else if (x>=0 && ch_max<0) {
+                } else if (x>=0 && ch_max<=0) {
                     n.classList.add('ch_pos_over_invisible')
-                } else if (x<0 && ch_min<=0) {
+                } else if (x<0 && ch_min<0) {
                     x = ch_filter(x)
                     let tip = (x - ch_min + 0.000005) / (ch_max - ch_min + 0.00001) * ch_width
                     let left
@@ -540,7 +540,7 @@ function build_main_table() {
                     z.classList.add("ch_bar")
                     z.setAttribute('style', `left: ${left}px; width: ${w}px`)
                     nn.appendChild(z)
-                } else if (x<0 && ch_min>0) {
+                } else if (x<0 && ch_min>=0) {
                     n.classList.add('ch_neg_over_invisible')
                 }
 

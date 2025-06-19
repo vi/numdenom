@@ -69,9 +69,6 @@ select {
     max-width: 100px;
 }
 
-.ch_container {
-
-}
 .ch_container2 {
     display: inline-flex;
     width: 100%;
@@ -140,6 +137,9 @@ select {
     input {
         filter: brightness(70%);
     }
+    td,label,th {
+        color:#bbb
+    }
 
     .title2 {
         color: rgb(207, 95, 255);
@@ -155,5 +155,36 @@ select {
     }
     #column_headers {
         background: black
+    }
+
+    .ch_zero {
+        background-color: white;
+    }
+
+    .ch_line {
+        background-color: lightgreen;
+    }
+
+    .ch_pos {
+        background-color: rgb(206, 206, 206);
+    }
+    .ch_pos_over {
+        background-color: rgb(151, 114, 114);
+    }
+    .ch_pos_over_invisible {
+        background-color: rgb(66, 35, 35);
+    }
+
+    .ch_neg {
+        background-color: rgb(161, 157, 216);
+    }
+    .ch_neg_over {
+        background-color: rgb(86, 92, 129);
+    }
+    .ch_neg_over_invisible {
+        background-color: rgb(33, 33, 87);
+    }
+    .ch_missing {
+        background-color: rgb(59, 59, 59);
     }
 }
