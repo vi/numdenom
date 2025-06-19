@@ -29,7 +29,7 @@ $ ./numdenom.py sample.csv sample.html
 ## Algorithm
 
 1. Read a CSV file and divide all its columns in two types: filter columns and value columns.
-2. Value columns are pairs of columns named `x_num` and `x_denom`. They should only contain numbers. Filter columns are all columns not named like `*_num` or `*_denom`.
+2. Value columns are pairs of columns named `x_num` and `x_denom`. They should only contain numbers. Filter columns are all columns not named like `*_num` or `*_denom`. Alternatively, there can be just `x_num` and a common, shared `denom` column. In the latter case the `denom` column becomes `N` column in the output table.
 3. Output a HTML file that contains input file in a compressed form, along with some Javascript code. The file is self-contained and can be opened using `file://` links.
 4. Within the generated page, render all filter columns as comboboxes on the left side. Each change of the filter settings recalculate the table.
 5. For each value column, calculate the cell value by summing all `_num` values, then dividing it by the sum of `_denom` values. Rows not matching the filter settings are excluded from the sums. Special filter setting value `_COL` promotes filter column to show all its values separately as individual rows.
@@ -44,7 +44,8 @@ Value columns are sorted lexicographically. Content of filter columns is also so
 * Tooltip shows specific aggregated numerators and denominators for each cell.
 * Dark mode is supported (should trigger automatically when needed).
 * You can set minimal denominator value to hide cells where aggregated denominator is too low.
-* You can use URL fragment specifier like `#b=_COL` to provide initial filter settings.
+* You can use URL fragment specifier like `#b=_COL` to provide initial filter settings (and other settings).
+* There is a feature to quickly display a chart of some column.
 
 ## Building and running.
 
