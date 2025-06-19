@@ -85,6 +85,7 @@ function build_main_table() {
     let min_denom = (document.getElementById("min_denom") as HTMLInputElement).valueAsNumber
 
     let promoted_filters_n = 0
+    let main_denom = window.content.main_denom
 
     for (const s of window.content.filters) {
         let setting_selector = document.getElementById(`set_${s.name}`) as HTMLOptionElement;
@@ -98,6 +99,26 @@ function build_main_table() {
 
             promoted_filters_n+=1;
         }
+    }
+
+    if (main_denom != null)  {
+        let n = document.createElement("th");
+        
+        let colname = "N"
+        n.scope="col";
+
+        let lbl = document.createElement("label")
+        let chk = document.createElement("input")
+        chk.type="checkbox"
+        chk.checked = high_contrast_colorisations.has(colname)
+        chk.onchange =  function() { 
+            handle_highcontrast_checkbox(colname)
+        }
+        lbl.textContent = colname;
+
+        lbl.appendChild(chk)
+        n.appendChild(lbl)
+        colheads.appendChild(n);
     }
 
     for (const s of window.content.values) {
@@ -122,6 +143,9 @@ function build_main_table() {
 
         value_nums.push(s.num)
         value_denoms.push(s.denom)
+    }
+    if (main_denom != null)  {
+        highcontrast.push(high_contrast_colorisations.has("N"))
     }
 
     let nfilters = filter_policies.length
@@ -194,8 +218,10 @@ function build_main_table() {
 
     //console.log(keys)
 
-    let mins=new Array(nvalues).fill(Infinity);
-    let maxes=new Array(nvalues).fill(-Infinity);
+    let mins=new Array(nvalues+1).fill(Infinity);
+    let maxes=new Array(nvalues+1).fill(-Infinity);
+
+    let N_index = nvalues
 
     for (const [k, rr] of db) {
         for (let j = 0; j<nvalues; j+=1) {
@@ -206,6 +232,11 @@ function build_main_table() {
                 if (x < mins[j]) mins[j] = x;
                 if (x > maxes[j]) maxes[j] = x;
             } 
+        }
+        if (main_denom != null) {
+            let x = rr.values[main_denom]
+            if (x < mins[N_index]) mins[N_index] = x;
+            if (x > maxes[N_index]) maxes[N_index] = x;
         }
     }
 
@@ -219,6 +250,43 @@ function build_main_table() {
             for (let k = 0; k<promoted_filters_n; k+=1) {
                 let td = document.createElement("td")
                 td.textContent = rr.promoted_filters[k]
+                tr.appendChild(td)
+            }
+
+            if (main_denom != null) {
+                let td = document.createElement("td");
+                let x = rr.values[main_denom]
+
+                td.textContent = `${x}`
+
+                let q = (x + 0.000005) / (maxes[N_index] + 0.00001)
+                if (q>1.0) q=1.0;
+                if (q<0.0) q=0.0;
+
+                if (keys.length==1) {
+                    q = 0.0
+                }
+
+                let l
+                let c
+                if (darkMode) {
+                    if (highcontrast[N_index]) {
+                        l=10+70*q
+                    } else {
+                        l=0 + 50*q
+                    }
+                } else {
+                    if (highcontrast[N_index]) {
+                        l=100.0 - 40*q
+                        c=40*q
+                    } else {
+                        l=100 - 3*q
+                        c=5*q
+                    }
+                }
+                let h = 190;
+                td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
+
                 tr.appendChild(td)
             }
             for (let j = 0; j<nvalues; j+=1) {
@@ -289,6 +357,9 @@ function build_main_table() {
     for (let j=0; j<promoted_filters_n; j+=1) {
         totperc_row.appendChild(document.createElement("td"))
     }
+    if (main_denom != null) {
+        totperc_row.appendChild(document.createElement("td"))
+    }
     for (let j=0; j<nvalues; j+=1) {
 
         let td = document.createElement("td")
@@ -306,6 +377,9 @@ function build_main_table() {
     avgs_row.replaceChildren()
 
     for (let j=0; j<promoted_filters_n; j+=1) {
+        avgs_row.appendChild(document.createElement("td"))
+    }
+    if (main_denom != null) {
         avgs_row.appendChild(document.createElement("td"))
     }
     for (let j=0; j<nvalues; j+=1) {
