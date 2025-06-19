@@ -66,6 +66,16 @@ function handle_highcontrast_checkbox(name: string) {
     }
     build_main_table()
 }
+function chart_settings_visibility_checkbox() {
+    let chk = document.getElementById("chart_toggle") as HTMLInputElement
+    let sets = document.getElementById("chart_settings") as HTMLDivElement
+
+    if (chk.checked) {
+        sets.setAttribute("style","")
+    } else {
+        sets.setAttribute("style","display:none")
+    }
+}
 
 function build_main_table() {
     let colheads = document.getElementById("column_headers") as HTMLTableRowElement;
@@ -115,6 +125,8 @@ function build_main_table() {
         chk.onchange =  function() { 
             handle_highcontrast_checkbox(colname)
         }
+        chk.setAttribute("rote","switch")
+        chk.title=`Bright colorisation of {colname} column`
         lbl.textContent = colname;
 
         lbl.appendChild(chk)
@@ -137,6 +149,8 @@ function build_main_table() {
             handle_highcontrast_checkbox(colname)
         }
         lbl.textContent = colname;
+        chk.setAttribute("rote","switch")
+        chk.title=`Bright colorisation of '${colname}' column`
 
         lbl.appendChild(chk)
         n.appendChild(lbl)
@@ -380,6 +394,8 @@ function build_main_table() {
             build_main_table()
         }
         lbl.textContent = "%";
+        chk.setAttribute("rote","switch")
+        chk.title=`Percentage from total instead of absolute numbers for the N column`
 
         lbl.appendChild(chk)
         n.appendChild(lbl)
@@ -481,5 +497,21 @@ function build_settings_pane() {
         } else {
             slct.value = "*"
         }
+    }
+
+    let ch_col = document.getElementById("ch_col") as HTMLSelectElement
+
+    if (window.content.main_denom != null) {
+        let x = document.createElement("option")
+        x.setAttribute("value", "N");
+        x.textContent = "N"
+        ch_col.appendChild(x)
+    }
+
+    for (const v of window.content.values) {
+        let x = document.createElement("option")
+        x.setAttribute("value", v.name);
+        x.textContent = v.name
+        ch_col.appendChild(x)
     }
 }

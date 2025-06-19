@@ -4,12 +4,14 @@ body {
     gap: 3px
 }
 
-#settings {
+#all_settings {
+    background-color: #eee;
+}
+.settings {
     display: flex;
     flex-wrap: wrap;    
     flex-direction: column;
     align-items: flex-start;
-    background-color: #eee;
 }
 
 .title2 {
@@ -51,9 +53,9 @@ body {
     background: white;
 }
 
-#min_denom {
+input[type="number"] {
     max-width: 60px;
-}
+} 
 
 #totperc_row {
     font-size: small;
@@ -75,7 +77,7 @@ select {
         background-color: #333;
     }
 
-    #settings {
+    #all_settings {
         background-color: #333;
     }
     div {

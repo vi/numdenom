@@ -18,11 +18,32 @@
     </head>
 
 <body onload="init()">
-    <div id="settings">
+    <div id="all_settings" class="settings">
+        <label for="min_denom">Min denom:</label>
+        <input type="number" value="0.001" id="min_denom" name="min_denom" onchange="build_main_table()">
         
-           <label for="min_denom">Min denom:</label>
-           <input type="number" value="0.001" id="min_denom" name="min_denom" onchange="build_main_table()">
-        
+        <div id="settings" class="settings"></div>
+
+        <label><input type="checkbox" id="chart_toggle" role="switch" onchange="chart_settings_visibility_checkbox()">chart:</label>
+        <div id="chart_settings" class="settings" style="display:none">
+            <label for="ch_col">col</label>
+            <select id="ch_col" name="ch_col" onchange="build_main_table()">
+                <option value=""></option>
+            </select>
+            <label for="ch_fn">fn</label>
+            <select id="ch_fn" name="ch_fn" onchange="build_main_table()">
+                <option value="lin">lin</option>
+                <option value="ln">ln</option>
+                <option value="sqrt">sqrt</option>
+                <option value="atan">atan</option>
+            </select>
+            <label for="ch_width">width:</label>
+            <input type="number" value="1000" id="ch_width" name="ch_width" onchange="build_main_table()">
+            <label for="ch_min">min:</label>
+            <input type="number" value="" id="ch_min" name="ch_min" onchange="build_main_table()">
+            <label for="ch_max">max:</label>
+            <input type="number" value="" id="ch_max" name="ch_max" onchange="build_main_table()">
+        </div>
     </div>
     <div id="tableandtitle">
         <div id="header">
