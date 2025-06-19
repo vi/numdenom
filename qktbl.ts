@@ -3,8 +3,10 @@ type NumOrStr = string | number;
 
 interface IContent {
   filters: IFilter[];
-  values: string[];
-  data: NumOrStr[][];
+  values: IValueColumn[];
+  filters_data: string[][];
+  values_data: number[][];
+  main_denom: number | null;
 }
 
 interface IFilter {
@@ -12,9 +14,16 @@ interface IFilter {
   vals: string[];
 }
 
+interface IValueColumn {
+    name: string;
+    num: number;
+    denom: number;
+  }
+
 interface Window {
     compressed_data: string;
     content: Content;
+    total_values: number[];
 }
 
 const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ?? false;
@@ -40,8 +49,7 @@ function init() {
 
 
 interface IRowInfo {
-    nums: number[];
-    denoms: number[];
+    values: number[];
 
     promoted_filters: string[];
 }
@@ -63,11 +71,15 @@ function build_main_table() {
 
     colheads.replaceChildren()
 
+    let nvalues = window.content.values.length
+    let values_rowlength = window.content.values_data[0].length
+
+    let value_nums = []
+    let value_denoms = []
+
     let filter_policies = []
 
-    let total_denoms = []
-    let filtered_nums = []
-    let filtered_denoms = []
+    let filtered_values = new Array(values_rowlength).fill(0)
     let highcontrast = []
 
     let min_denom = (document.getElementById("min_denom") as HTMLInputElement).valueAsNumber
@@ -91,51 +103,43 @@ function build_main_table() {
     for (const s of window.content.values) {
         let n = document.createElement("th");
         
+        let colname = s.name
         n.scope="col";
 
         let lbl = document.createElement("label")
         let chk = document.createElement("input")
         chk.type="checkbox"
-        highcontrast.push(high_contrast_colorisations.has(s))
-        chk.checked = high_contrast_colorisations.has(s)
+        highcontrast.push(high_contrast_colorisations.has(colname))
+        chk.checked = high_contrast_colorisations.has(colname)
         chk.onchange =  function() { 
-            handle_highcontrast_checkbox(s)
+            handle_highcontrast_checkbox(colname)
         }
-        lbl.textContent = s;
+        lbl.textContent = colname;
 
         lbl.appendChild(chk)
         n.appendChild(lbl)
         colheads.appendChild(n);
 
-        total_denoms.push(0)
-        filtered_nums.push(0)
-        filtered_denoms.push(0)
+        value_nums.push(s.num)
+        value_denoms.push(s.denom)
     }
 
     let nfilters = filter_policies.length
-    let nvalues = window.content.values.length
-
-    let first_data_row = true
 
     let rows = document.getElementById("the_rows") as HTMLTableSectionElement
     rows.replaceChildren()
 
     let db : Map<string, RowInfo> = new Map();
 
-    for (const d of window.content.data) {
+    for (const [row_index, filter_row] of window.content.filters_data.entries()) {
         let promoted_filters = []
         let matches_filter = true
         for (let i = 0; i<nfilters; i+=1) {
-            let fv = d[i];
+            let fv = filter_row[i];
             
             if (filter_policies[i] !== "*" && filter_policies[i] != "_COL" && filter_policies[i] != fv) {
                 matches_filter = false
             }
-        }
-
-        for (let j = 0; j<nvalues; j+=1) {
-            let v = d[nfilters + nvalues + j];
-            total_denoms[j] += v;
         }
 
         if (!matches_filter) {
@@ -143,7 +147,7 @@ function build_main_table() {
         }
 
         for (let i = 0; i<nfilters; i+=1) {
-            let fv = d[i];
+            let fv = filter_row[i];
             if (filter_policies[i] == "_COL") {
                 promoted_filters.push(fv)
             }
@@ -156,20 +160,16 @@ function build_main_table() {
         } else {
             cursor = {
                 promoted_filters: promoted_filters,
-                nums: new Array(nvalues).fill(0),
-                denoms: new Array(nvalues).fill(0),
+                values: new Array(values_rowlength).fill(0),
             }
         }
 
-        for (let j = 0; j<nvalues; j+=1) {
-            let v = +d[nfilters + j];
-            cursor.nums[j] += v;
-            filtered_nums[j] += v;
-        }
-        for (let j = 0; j<nvalues; j+=1) {
-            let v = +d[nfilters + nvalues + j];
-            cursor.denoms[j] += v;
-            filtered_denoms[j] += v;
+        let value_row = window.content.values_data[row_index]
+
+        for (let j = 0; j<values_rowlength; j+=1) {
+            let v = +value_row[j];
+            cursor.values[j] += v;
+            filtered_values[j] += v;
         }
         db.set(key, cursor)
     }
@@ -199,8 +199,10 @@ function build_main_table() {
 
     for (const [k, rr] of db) {
         for (let j = 0; j<nvalues; j+=1) {
-            if (rr.denoms[j] > min_denom) {
-                let x = rr.nums[j] / rr.denoms[j];
+            let num = rr.values[value_nums[j]]
+            let denom = rr.values[value_denoms[j]]
+            if (denom > min_denom) {
+                let x = num / denom;
                 if (x < mins[j]) mins[j] = x;
                 if (x > maxes[j]) maxes[j] = x;
             } 
@@ -211,6 +213,7 @@ function build_main_table() {
     for (let k of keys) {
         if (db.has(k)) {
             let rr = db.get(k)
+            console.log(rr)
 
             let tr = document.createElement("tr")
             for (let k = 0; k<promoted_filters_n; k+=1) {
@@ -220,10 +223,11 @@ function build_main_table() {
             }
             for (let j = 0; j<nvalues; j+=1) {
                 let td = document.createElement("td")
+                
+                let num = rr.values[value_nums[j]]
+                let denom = rr.values[value_denoms[j]]
     
-                if (rr.denoms[j] > min_denom) {
-                    let num = rr.nums[j]
-                    let denom = rr.denoms[j]
+                if (denom > min_denom) {
                     let x = num / denom
                     td.textContent = `${x.toFixed(2)}`
     
@@ -289,8 +293,8 @@ function build_main_table() {
 
         let td = document.createElement("td")
 
-        if (total_denoms[j] > min_denom) {
-            let x = 100.0*filtered_denoms[j] / total_denoms[j];
+        if (window.total_values[value_denoms[j]] > min_denom) {
+            let x = 100.0*filtered_values[value_denoms[j]] / window.total_values[value_denoms[j]];
             td.textContent = `${x.toFixed(2)}%`
         } else {
             td.textContent = "-"
@@ -308,9 +312,9 @@ function build_main_table() {
 
         let td = document.createElement("td")
 
-        if (filtered_denoms[j] > min_denom) {
-            let num = filtered_nums[j]
-            let denom = filtered_denoms[j]
+        let num = filtered_values[value_nums[j]]
+        let denom = filtered_values[value_denoms[j]]
+        if (denom > min_denom) {
             let x = 1.0*num/denom
             td.textContent = `${x.toFixed(2)}`
             td.setAttribute("title", `${num} / ${denom}`);
@@ -318,13 +322,20 @@ function build_main_table() {
             td.textContent = ""
         }
         avgs_row.appendChild(td)
-    }
-
-    
+    }    
 }
 
 
 function build_settings_pane() {
+    let values_rowlength = window.content.values_data[0].length
+
+    window.total_values = new Array(values_rowlength).fill(0)
+    for (const x of window.content.values_data) {
+        for (const [i, v] of x.entries()) {
+            window.total_values[i] += v
+        }
+    }
+
     let default_values: Map<string, string> = new Map()
 
     for (const x of window.location.hash.substring(1).split('&')) {
