@@ -12,7 +12,7 @@ from typing import List, Set, Dict, Any, Tuple
 
 HTML_TEMPLATE=b"%{html_template}"
 
-def quicktable(inputfile: str, outputfile: str, table_title: str) -> None:
+def quicktable(inputfile: str, outputfile: str, table_title: str, description_file: str|None) -> None:
     header_parsed = False
     header : List[str]
     filters : List[str] = []
@@ -31,6 +31,20 @@ def quicktable(inputfile: str, outputfile: str, table_title: str) -> None:
     filters_data: List[List[str]] = []
     values_data: List[List[float]] = []
     linectr = 0
+
+    description=""
+    description_autopre=False
+
+   
+
+    if df := description_file:
+        if df.startswith("pre:"):
+            description_autopre=True
+            df=description_file[4:]
+        with open(df, "r") as f:
+            description = f.read()
+        if description_autopre:
+            description = "<pre>"+description+"</pre>"
 
     with open(inputfile, newline='') as f:
         ff = csv.reader(f)
@@ -157,6 +171,7 @@ def quicktable(inputfile: str, outputfile: str, table_title: str) -> None:
         txt : str = base64.standard_b64decode(HTML_TEMPLATE).decode("UTF-8")
         txt = txt.replace('%{data}', subst)
         txt = txt.replace('%{title}', table_title)
+        txt = txt.replace('%{description}', description)
         of.write(txt)
 
 
@@ -166,7 +181,10 @@ if __name__ == '__main__':
     else:
         inputfile = sys.argv[1]
         table_title = Path(inputfile).stem
+        description_file = None
         if len(sys.argv)>=4:
             table_title = sys.argv[3]
-        quicktable(sys.argv[1], sys.argv[2], table_title)
+        if len(sys.argv)>=5:
+            description_file = sys.argv[4]
+        quicktable(sys.argv[1], sys.argv[2], table_title, description_file)
 

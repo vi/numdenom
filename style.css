@@ -26,6 +26,12 @@ body {
     width: 100%;
 }
 
+#description {
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+}
+
 #overallp {
     height: 24px;
     font-size: larger;
@@ -186,5 +192,8 @@ select {
     }
     .ch_missing {
         background-color: rgb(59, 59, 59);
+    }
+    #description {
+        color: lightgray
     }
 }

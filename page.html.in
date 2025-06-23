@@ -24,7 +24,7 @@
         
         <div id="settings" class="settings"></div>
 
-        <label><input type="checkbox" id="chart_toggle" role="switch" onchange="chart_settings_visibility_checkbox()">chart:</label>
+        <label><input type="checkbox" id="chart_toggle" role="switch" title="Show chart settings" onchange="chart_settings_visibility_checkbox()">chart:</label>
         <div id="chart_settings" class="settings" style="display:none">
             <label for="ch_col">col</label>
             <select id="ch_col" name="ch_col" onchange="build_main_table()">
@@ -51,10 +51,14 @@
     </nav>
     <main id="tableandtitle">
         <header id="header">
-            <div class="title2">
+            <span class="title2">
                 %{title}
-            </div>
+            </span>
+            <input type="checkbox" id="show_description"  role="switch" title="Show table description"  onchange="show_description_checkbox()">
         </header>
+        <article id="description" style="display:none">
+%{description}
+        </article>
         <table id="mainarea">
             <thead>
                 <tr id="totperc_row">

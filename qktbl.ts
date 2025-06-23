@@ -76,6 +76,16 @@ function chart_settings_visibility_checkbox() {
         sets.setAttribute("style","display:none")
     }
 }
+function show_description_checkbox() {
+    let show_desc_ck = document.getElementById("show_description") as HTMLInputElement
+    let description = document.getElementById("description") as HTMLParagraphElement
+
+    if (show_desc_ck.checked) {
+        description.setAttribute("style","")
+    } else {
+        description.setAttribute("style","display:none")
+    }
+}
 
 function build_main_table() {
     let colheads = document.getElementById("column_headers") as HTMLTableRowElement;
@@ -640,6 +650,8 @@ function build_settings_pane() {
     let default_values: Map<string, string> = new Map()
 
     let ch_col = document.getElementById("ch_col") as HTMLSelectElement
+    let show_desc_ck = document.getElementById("show_description") as HTMLInputElement
+    let description = document.getElementById("description") as HTMLParagraphElement
 
     if (window.content.main_denom !== null) {
         let x = document.createElement("option")
@@ -665,9 +677,17 @@ function build_settings_pane() {
             high_contrast_colorisations.add(n)
             continue
         }
+        else if (x === "show_description") {
+            show_desc_ck.checked = true
+            continue
+        }
 
         const a = x.split('=',2)
         default_values.set(decodeURIComponent(a[0]), decodeURIComponent(a[1]))
+
+        if (!a[0]) {
+            continue
+        }
 
         let some_input_element = document.getElementById(a[0]) as HTMLInputElement
         if (some_input_element) {
@@ -721,4 +741,9 @@ function build_settings_pane() {
     }
 
     chart_settings_visibility_checkbox()
+
+    if (!description.innerHTML.trim()) {
+        show_desc_ck.setAttribute("style", "display: none")
+    }
+    show_description_checkbox();
 }
