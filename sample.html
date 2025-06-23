@@ -35,6 +35,12 @@ body {
     width: 100%;
 }
 
+#description {
+    font-family: monospace;
+    border: 1px solid;
+    padding: 2px;
+}
+
 #overallp {
     height: 24px;
     font-size: larger;
@@ -196,12 +202,15 @@ select {
     .ch_missing {
         background-color: rgb(59, 59, 59);
     }
+    #description {
+        color: lightgray
+    }
 }
 
 </style>
 
 <script>
-    var compressed_data = "data:application/octet-stream;base64,H4sIAHGGVGgC/21RWwqDMBC8iuRbJC8L7VWKSIopCJpiq7VFvHuz6yNZ6c+wMzuZZMjE7nXT2+eLXZLrxJxprZ+YYWnC3qZBmXVdB3wcR1bMaRJsN2LrOdBeIEpEhagRc3+4WPyDPdz3AYcbWj9zP1XWPWAW5LZvMMnIpDB1rVFWpjeQvb/av8rvAxWUSkoVpXqh0DyK2qigVFKqKPX1Q/vwTJX5whpAAuQZh1NqndNErCtQccYVBzgtqqYJelH57kX1HKlhpf6qcYLYw/XRK6MEQb3QAsq2pnbl9k9uaJr5Bwko+uRwAgAA";
+    var compressed_data = "data:application/octet-stream;base64,H4sIABHIWWgC/21RWwqDMBC8iuRbJC8L7VWKSIopCJpiq7VFvHuz6yNZ6c+wMzuZZMjE7nXT2+eLXZLrxJxprZ+YYWnC3qZBmXVdB3wcR1bMaRJsN2LrOdBeIEpEhagRc3+4WPyDPdz3AYcbWj9zP1XWPWAW5LZvMMnIpDB1rVFWpjeQvb/av8rvAxWUSkoVpXqh0DyK2qigVFKqKPX1Q/vwTJX5whpAAuQZh1NqndNErCtQccYVBzgtqqYJelH57kX1HKlhpf6qcYLYw/XRK6MEQb3QAsq2pnbl9k9uaJr5Bwko+uRwAgAA";
 const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ?? false;
 const decompress = async (url) => {
     // @ts-ignore
@@ -241,7 +250,18 @@ function chart_settings_visibility_checkbox() {
         sets.setAttribute("style", "display:none");
     }
 }
+function show_description_checkbox() {
+    let show_desc_ck = document.getElementById("show_description");
+    let description = document.getElementById("description");
+    if (show_desc_ck.checked) {
+        description.setAttribute("style", "");
+    }
+    else {
+        description.setAttribute("style", "display:none");
+    }
+}
 function build_main_table() {
+    let url_fragment = [];
     let colheads = document.getElementById("column_headers");
     colheads.replaceChildren();
     let nvalues = window.content.values.length;
@@ -258,6 +278,27 @@ function build_main_table() {
     let ch_min_setting = document.getElementById("ch_min").valueAsNumber;
     let ch_max_setting = document.getElementById("ch_max").valueAsNumber;
     let ch_line = document.getElementById("ch_line").valueAsNumber;
+    if (ch_col) {
+        url_fragment.push(`ch_col=${ch_col}`);
+        if (ch_fn !== "lin") {
+            url_fragment.push(`ch_fn=${ch_fn}`);
+        }
+        if (ch_width !== 500) {
+            url_fragment.push(`ch_width=${ch_width}`);
+        }
+        if (!isNaN(ch_min_setting)) {
+            url_fragment.push(`ch_min_setting=${ch_min_setting}`);
+        }
+        if (!isNaN(ch_max_setting)) {
+            url_fragment.push(`ch_max_setting=${ch_max_setting}`);
+        }
+        if (!isNaN(ch_line)) {
+            url_fragment.push(`ch_line=${ch_line}`);
+        }
+    }
+    if (min_denom > 0.00101) {
+        url_fragment.push(`min_denom=${min_denom}`);
+    }
     let ch_filter;
     switch (ch_fn) {
         case "ln":
@@ -294,8 +335,12 @@ function build_main_table() {
     }
     for (const s of window.content.filters) {
         let setting_selector = document.getElementById(`set_${s.name}`);
-        filter_policies.push(setting_selector.value);
-        if (setting_selector.value === "_COL") {
+        let sv = setting_selector.value;
+        filter_policies.push(sv);
+        if (sv !== '*') {
+            url_fragment.push(`${s.name}=${sv}`);
+        }
+        if (sv === "_COL") {
             let n = document.createElement("th");
             n.textContent = s.name;
             n.scope = "col";
@@ -313,6 +358,9 @@ function build_main_table() {
         chk.id = `accent_N`;
         chk.setAttribute("rote", "switch");
         chk.checked = high_contrast_colorisations.has(colname);
+        if (chk.checked) {
+            url_fragment.push(`accent_N`);
+        }
         chk.onchange = function () {
             handle_highcontrast_checkbox(colname);
         };
@@ -336,6 +384,9 @@ function build_main_table() {
         chk.onchange = function () {
             handle_highcontrast_checkbox(colname);
         };
+        if (chk.checked) {
+            url_fragment.push(`accent_${s.name}`);
+        }
         lbl.textContent = colname;
         chk.title = `Bright colorisation of '${colname}' column`;
         lbl.appendChild(chk);
@@ -687,6 +738,9 @@ function build_main_table() {
             relative_N = !relative_N;
             build_main_table();
         };
+        if (chk.checked) {
+            url_fragment.push(`relative_N`);
+        }
         lbl.textContent = "%";
         chk.setAttribute("rote", "switch");
         chk.title = `Percentage from total instead of absolute numbers for the N column`;
@@ -736,6 +790,12 @@ function build_main_table() {
         let n = document.createElement("td");
         avgs_row.appendChild(n);
     }
+    let show_desc_ck = document.getElementById("show_description");
+    if (show_desc_ck.checked) {
+        url_fragment.push(`show_description`);
+    }
+    //window.location.hash=url_fragment.join('&')
+    window.history.replaceState(null, null, '#' + url_fragment.join('&'));
 }
 function build_settings_pane() {
     let values_rowlength = window.content.values_data[0].length;
@@ -747,6 +807,8 @@ function build_settings_pane() {
     }
     let default_values = new Map();
     let ch_col = document.getElementById("ch_col");
+    let show_desc_ck = document.getElementById("show_description");
+    let description = document.getElementById("description");
     if (window.content.main_denom !== null) {
         let x = document.createElement("option");
         x.setAttribute("value", "N");
@@ -769,8 +831,15 @@ function build_settings_pane() {
             high_contrast_colorisations.add(n);
             continue;
         }
+        else if (x === "show_description") {
+            show_desc_ck.checked = true;
+            continue;
+        }
         const a = x.split('=', 2);
         default_values.set(decodeURIComponent(a[0]), decodeURIComponent(a[1]));
+        if (!a[0]) {
+            continue;
+        }
         let some_input_element = document.getElementById(a[0]);
         if (some_input_element) {
             some_input_element.value = a[1];
@@ -814,6 +883,58 @@ function build_settings_pane() {
         chk.checked = true;
     }
     chart_settings_visibility_checkbox();
+    if (!description.innerHTML.trim()) {
+        show_desc_ck.setAttribute("style", "display: none");
+    }
+    show_description_checkbox();
+}
+function download() {
+    let anchor = document.getElementById("download_anchor");
+    let line = [];
+    let chunks = [];
+    function commit_line() {
+        chunks.push(line.join(",") + "\n");
+        line = [];
+    }
+    for (const filter of window.content.filters) {
+        line.push(filter.name);
+    }
+    if (window.content.main_denom !== null) {
+        line.push("denom");
+    }
+    for (const value of window.content.values) {
+        if (value.denom === window.content.main_denom) {
+            line.push(`${value.name}_num`);
+        }
+        else {
+            line.push(`${value.name}_num`);
+            line.push(`${value.name}_denom`);
+        }
+    }
+    commit_line();
+    for (const [i, filters] of window.content.filters_data.entries()) {
+        const values = window.content.values_data[i];
+        for (const fv of filters) {
+            line.push(fv);
+        }
+        if (window.content.main_denom !== null) {
+            line.push(`${values[window.content.main_denom]}`);
+        }
+        for (const value of window.content.values) {
+            if (value.denom === window.content.main_denom) {
+                line.push(`${values[value.num]}`);
+            }
+            else {
+                line.push(`${values[value.num]}`);
+                line.push(`${values[value.denom]}`);
+            }
+        }
+        commit_line();
+    }
+    const data = new Blob(chunks, { type: 'text/csv' });
+    const url = URL.createObjectURL(data);
+    anchor.href = url;
+    anchor.click();
 }
 
 </script>
@@ -827,7 +948,7 @@ function build_settings_pane() {
         
         <div id="settings" class="settings"></div>
 
-        <label><input type="checkbox" id="chart_toggle" role="switch" onchange="chart_settings_visibility_checkbox()">chart:</label>
+        <label><input type="checkbox" id="chart_toggle" role="switch" title="Show chart settings" onchange="chart_settings_visibility_checkbox()">chart:</label>
         <div id="chart_settings" class="settings" style="display:none">
             <label for="ch_col">col</label>
             <select id="ch_col" name="ch_col" onchange="build_main_table()">
@@ -854,10 +975,16 @@ function build_settings_pane() {
     </nav>
     <main id="tableandtitle">
         <header id="header">
-            <div class="title2">
+            <span class="title2">
                 sample
-            </div>
+            </span>
+            <button id="download_csv" title="Download raw data contained in this page as a CSV file" onclick="download()">csv</button>
+            <a id="download_anchor" download="data.csv"/>
+            <input type="checkbox" id="show_description"  role="switch" title="Show table description"  onchange="show_description_checkbox()">
         </header>
+        <article id="description" style="display:none">
+
+        </article>
         <table id="mainarea">
             <thead>
                 <tr id="totperc_row">

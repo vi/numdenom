@@ -42,10 +42,18 @@ Value columns are sorted lexicographically. Content of filter columns is also so
 * When filtering some rows out, percentage above value column headers indicates share of remaining denominators.
 * When `_COL` mode is used, averages are displayed at the top.
 * Tool-tip shows specific aggregated numerators and denominators for each cell.
-* Dark mode is supported (should trigger automatically when needed).
+* Dark theme is supported (should trigger automatically when needed).
 * You can set minimal denominator value to hide cells where aggregated denominator is too low.
-* You can use URL fragment specifier like `#b=_COL` to provide initial filter settings (and other settings).
+* You can use URL fragment specifier like `#b=_COL` to provide initial filter settings (and other settings). URL fragment is updated automatically when you change settings.
 * There is a feature to quickly display a chart of some column.
+* Source CSV data can be extracted from the page.
+* You can include additional information into the table as a collapsible section.
+
+## Limitations
+
+* Data are assumed to be reasonable, e.g. filter values should not be literally `_COL` or `*`. Quotation marks or commas can lead to problems with CSV round-trip.
+* Missing value numbers are turned into `0`s.
+* Additional command line arguments (table title and description file) are assumed to be trusted. You can include HTML there.
 
 ## Building and running.
 
