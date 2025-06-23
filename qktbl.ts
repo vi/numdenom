@@ -88,6 +88,7 @@ function show_description_checkbox() {
 }
 
 function build_main_table() {
+    let url_fragment = []
     let colheads = document.getElementById("column_headers") as HTMLTableRowElement;
 
     colheads.replaceChildren()
@@ -110,6 +111,28 @@ function build_main_table() {
     let ch_min_setting =    (document.getElementById("ch_min") as HTMLInputElement).valueAsNumber
     let ch_max_setting =    (document.getElementById("ch_max") as HTMLInputElement).valueAsNumber
     let ch_line =  (document.getElementById("ch_line") as HTMLInputElement).valueAsNumber
+
+    if (ch_col) {
+        url_fragment.push(`ch_col=${ch_col}`)
+        if (ch_fn !== "lin") {
+            url_fragment.push(`ch_fn=${ch_fn}`)
+        }
+        if (ch_width !== 500) {
+            url_fragment.push(`ch_width=${ch_width}`)
+        }
+        if (!isNaN(ch_min_setting)) {
+            url_fragment.push(`ch_min_setting=${ch_min_setting}`)
+        }
+        if (!isNaN(ch_max_setting)) {
+            url_fragment.push(`ch_max_setting=${ch_max_setting}`)
+        }
+        if (!isNaN(ch_line)) {
+            url_fragment.push(`ch_line=${ch_line}`)
+        }        
+    }
+    if (min_denom > 0.00101) {
+        url_fragment.push(`min_denom=${min_denom}`)
+    }
 
     let ch_filter : (x:number) => number
     switch (ch_fn) {
@@ -154,9 +177,15 @@ function build_main_table() {
 
     for (const s of window.content.filters) {
         let setting_selector = document.getElementById(`set_${s.name}`) as HTMLOptionElement;
-        filter_policies.push(setting_selector.value)
+        let sv = setting_selector.value
 
-        if (setting_selector.value === "_COL") {
+        filter_policies.push(sv)
+
+        if (sv !== '*') {
+            url_fragment.push(`${s.name}=${sv}`)
+        }
+
+        if (sv === "_COL") {
             let n = document.createElement("th");
             n.textContent = s.name;
             n.scope="col";
@@ -178,6 +207,9 @@ function build_main_table() {
         chk.id = `accent_N`
         chk.setAttribute("rote","switch")
         chk.checked = high_contrast_colorisations.has(colname)
+        if (chk.checked) {
+            url_fragment.push(`accent_N`)
+        }
         chk.onchange =  function() { 
             handle_highcontrast_checkbox(colname)
         }
@@ -205,6 +237,9 @@ function build_main_table() {
         chk.checked = high_contrast_colorisations.has(colname)
         chk.onchange =  function() { 
             handle_highcontrast_checkbox(colname)
+        }
+        if (chk.checked) {
+            url_fragment.push(`accent_${s.name}`)
         }
         lbl.textContent = colname;
         chk.title=`Bright colorisation of '${colname}' column`
@@ -581,6 +616,9 @@ function build_main_table() {
             relative_N = !relative_N
             build_main_table()
         }
+        if (chk.checked) {
+            url_fragment.push(`relative_N`)
+        }
         lbl.textContent = "%";
         chk.setAttribute("rote","switch")
         chk.title=`Percentage from total instead of absolute numbers for the N column`
@@ -634,7 +672,16 @@ function build_main_table() {
     if (chart_index !== null) {
         let n = document.createElement("td");
         avgs_row.appendChild(n);
-    } 
+    }
+
+    let show_desc_ck = document.getElementById("show_description") as HTMLInputElement
+
+    if (show_desc_ck.checked) {
+        url_fragment.push(`show_description`)
+    }
+
+    //window.location.hash=url_fragment.join('&')
+    window.history.replaceState(null, null, '#' + url_fragment.join('&'));
 }
 
 function build_settings_pane() {
