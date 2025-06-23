@@ -54,6 +54,8 @@
             <span class="title2">
                 %{title}
             </span>
+            <button id="download_csv" title="Download raw data contained in this page as a CSV file" onclick="download()">csv</button>
+            <a id="download_anchor" download="data.csv"/>
             <input type="checkbox" id="show_description"  role="switch" title="Show table description"  onchange="show_description_checkbox()">
         </header>
         <article id="description" style="display:none">

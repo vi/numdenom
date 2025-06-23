@@ -794,3 +794,55 @@ function build_settings_pane() {
     }
     show_description_checkbox();
 }
+
+function download() {
+    let anchor = document.getElementById("download_anchor") as HTMLAnchorElement
+    let line = []
+    let chunks = []
+    function commit_line() {
+        chunks.push(line.join(",")+"\n")
+        line=[]
+    }
+    for (const filter of window.content.filters) {
+        line.push(filter.name)
+    }
+    if (window.content.main_denom !== null) {
+        line.push("denom")
+    }
+    for (const value of window.content.values) {
+        if(value.denom === window.content.main_denom) {
+            line.push(`${value.name}_num`)
+        } else {
+            line.push(`${value.name}_num`)
+            line.push(`${value.name}_denom`)
+        }
+    }
+    commit_line();
+
+
+    for (const [i, filters] of window.content.filters_data.entries()) {
+        const values = window.content.values_data[i]
+        for (const fv of filters) {
+            line.push(fv)
+        }
+        if (window.content.main_denom !== null) {
+            line.push(`${values[window.content.main_denom]}`)
+        }
+
+        for (const value of window.content.values) {
+            if(value.denom === window.content.main_denom) {
+                line.push(`${values[value.num]}`)
+            } else {
+                line.push(`${values[value.num]}`)
+                line.push(`${values[value.denom]}`)
+            }
+        }
+        commit_line();
+    }
+
+
+    const data = new Blob(chunks, { type: 'text/csv' });
+    const url = URL.createObjectURL(data);
+    anchor.href = url
+    anchor.click()
+}
