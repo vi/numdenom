@@ -53,9 +53,11 @@ Value columns are sorted lexicographically. Content of filter columns is also so
 
 ## Limitations
 
+* Data is assumed to be not big enough. All rows are iterated every time you click on some setting on the page, so the more data you have, the bigger and slower would the resulting html be. Megabyte-sized files do work reasonably well though.
 * Data are assumed to be reasonable, e.g. filter values should not be literally `_COL` or `*`. Quotation marks or commas can lead to problems with CSV round-trip.
 * Missing value numbers are turned into `0`s.
-* Additional command line arguments (table title and description file) are assumed to be trusted. You can include HTML there.
+* Additional command line arguments (table title and description file) are assumed to be trusted. You can include raw HTML there.
+* In `_DIST` mode it would be a mess if you select multiple `_DIST` filters and their values do intersect.
 
 ## Building and running.
 
