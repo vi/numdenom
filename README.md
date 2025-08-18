@@ -48,6 +48,8 @@ Value columns are sorted lexicographically. Content of filter columns is also so
 * There is a feature to quickly display a chart of some column.
 * Source CSV data can be extracted from the page.
 * You can include additional information into the table as a collapsible section.
+* Special `_CHK` mode to select multiple filter values using checkboxes.
+* Special `_DIST` mode to see distribution of `N` (i.e. `denom`) as columns.
 
 ## Limitations
 
