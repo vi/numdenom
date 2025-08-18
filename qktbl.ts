@@ -28,6 +28,15 @@ interface Window {
 
 const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ?? false;
 
+/// Special filter value turn off filtering on that field. The default.
+const SPV_ALL="*"
+/// Special filter value to cause it to make that filter a column and increase number of rows
+const SPV_INTRODUCE_COLUMN="_COL"
+/// Special filter value make more than value of a filter selectiable (and still be mixed together)
+const SPV_CHECKBOXES="_CHK"
+/// Special filter value to calue filter values become individual columns that show distribution
+const SPV_PIVOT_DISTRIBUTION="_PVT"
+
 const decompress = async (url) => {
     // @ts-ignore
     const ds = new DecompressionStream('gzip');
@@ -185,13 +194,29 @@ function build_main_table() {
             url_fragment.push(`${s.name}=${sv}`)
         }
 
-        if (sv === "_COL") {
+        if (sv === SPV_INTRODUCE_COLUMN) {
             let n = document.createElement("th");
             n.textContent = s.name;
             n.scope="col";
             colheads.appendChild(n);
 
             promoted_filters_n+=1;
+        }
+
+        if (sv === SPV_CHECKBOXES) {
+            for (const v of s.vals) {
+                let span = document.getElementById(`chk_${s.name}_${v}_id`) as HTMLSpanElement
+                let chk = document.getElementById(`chk_${s.name}_${v}`) as HTMLInputElement;
+                if (chk.checked) {
+                    url_fragment.push(`chk_${s.name}_${v}`)
+                }
+                span.setAttribute("style","")
+            }
+        } else {
+            for (const v of s.vals) {
+                let span = document.getElementById(`chk_${s.name}_${v}_id`) as HTMLSpanElement
+                span.setAttribute("style","display: none")
+            }
         }
     }
 
@@ -274,10 +299,19 @@ function build_main_table() {
         let matches_filter = true
         for (let i = 0; i<nfilters; i+=1) {
             let fv = filter_row[i];
+            let filter_policy = filter_policies[i]
 
-            if (filter_policies[i] !== "*" && filter_policies[i] != "_COL" && filter_policies[i] != fv) {
+            if (filter_policy === SPV_ALL || filter_policy === SPV_INTRODUCE_COLUMN || filter_policy === SPV_PIVOT_DISTRIBUTION) {
+                // always true
+            } else if  (filter_policy === SPV_CHECKBOXES) {
+                // check the checkbox
+                let filter_name = window.content.filters[i].name
+                let chk = document.getElementById(`chk_${filter_name}_${fv}`) as HTMLInputElement;
+                matches_filter = chk && chk.checked
+            } else if (filter_policy != fv) {
                 matches_filter = false
             }
+
         }
 
         if (!matches_filter) {
@@ -286,7 +320,8 @@ function build_main_table() {
 
         for (let i = 0; i<nfilters; i+=1) {
             let fv = filter_row[i];
-            if (filter_policies[i] == "_COL") {
+            let filter_policy = filter_policies[i]
+            if (filter_policy == SPV_INTRODUCE_COLUMN) {
                 promoted_filters.push(fv)
             }
         }
@@ -315,7 +350,7 @@ function build_main_table() {
     let keys : string[] = [""]
 
     for (let i = 0; i<nfilters; i+=1) {   
-        if (filter_policies[i] === "_COL") {
+        if (filter_policies[i] === SPV_INTRODUCE_COLUMN) {
             let newkeys : string[] = []
             for (let x of window.content.filters[i].vals) {
                 for (let k of keys) {
@@ -714,6 +749,8 @@ function build_settings_pane() {
         ch_col.appendChild(x)
     }
 
+    let checked_checkboxes : Array<string> = []
+
     for (const x of window.location.hash.substring(1).split('&')) {
         if (x === "relative_N") {
             relative_N = true
@@ -740,6 +777,10 @@ function build_settings_pane() {
         if (some_input_element) {
             some_input_element.value = a[1]
         }
+
+        if (a[0].startsWith("chk_")) {
+            checked_checkboxes.push(a[0])
+        }
     }
 
     let settings = document.getElementById("settings") as HTMLDivElement;
@@ -759,13 +800,13 @@ function build_settings_pane() {
         settings.appendChild(slct)
 
         let col_opt = document.createElement("option")
-        col_opt.setAttribute("value", "_COL");
-        col_opt.textContent = "_COL"
+        col_opt.setAttribute("value", SPV_INTRODUCE_COLUMN);
+        col_opt.textContent = SPV_INTRODUCE_COLUMN
         slct.appendChild(col_opt)
 
         let all_opt = document.createElement("option")
-        all_opt.setAttribute("value", "*");
-        all_opt.textContent = "*"
+        all_opt.setAttribute("value", SPV_ALL);
+        all_opt.textContent = SPV_ALL
         slct.appendChild(all_opt)
 
         for (const v of s.vals) {
@@ -775,10 +816,46 @@ function build_settings_pane() {
             slct.appendChild(opt)
         }
 
+        let chkbox_opt = document.createElement("option")
+        chkbox_opt.setAttribute("value", SPV_CHECKBOXES);
+        chkbox_opt.textContent = SPV_CHECKBOXES
+        slct.appendChild(chkbox_opt)
+
+        let pivot_opts = document.createElement("option")
+        pivot_opts.setAttribute("value", SPV_PIVOT_DISTRIBUTION);
+        pivot_opts.textContent = SPV_PIVOT_DISTRIBUTION
+        slct.appendChild(pivot_opts)
+
         if (default_values.has(name)) {
             slct.value = default_values.get(name)
         } else {
-            slct.value = "*"
+            slct.value = SPV_ALL
+        }
+
+
+        for (const v of s.vals) {
+            let span = document.createElement("span")
+            span.id=`chk_${name}_${v}_id`
+            span.classList.add("set_val_chkb")
+
+            let chk = document.createElement("input")
+            chk.type="checkbox"
+            chk.id = `chk_${name}_${v}`
+            chk.name = `chk_${name}_${v}`
+            chk.setAttribute("rote","switch")
+            chk.onchange = () => build_main_table()
+            span.appendChild(chk)
+            
+            let lbl2 = document.createElement("label")
+            lbl2.textContent = v
+            lbl2.setAttribute("for", `chk_${name}_${v}`)
+            span.appendChild(lbl2)
+
+            if (slct.value !== SPV_CHECKBOXES) {
+                span.setAttribute("style", "display: none")
+            }
+            settings.appendChild(span)
+            //chk.checked = high_contrast_colorisations.has(colname) // TODO
         }
     }
 
@@ -793,6 +870,13 @@ function build_settings_pane() {
         show_desc_ck.setAttribute("style", "display: none")
     }
     show_description_checkbox();
+
+    for (const chk of checked_checkboxes) {
+        let some_input_element = document.getElementById(chk) as HTMLInputElement
+        if (some_input_element) {
+            some_input_element.checked = true
+        }
+    }
 }
 
 function download() {
