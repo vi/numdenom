@@ -35,7 +35,7 @@ const SPV_INTRODUCE_COLUMN="_COL"
 /// Special filter value make more than value of a filter selectiable (and still be mixed together)
 const SPV_CHECKBOXES="_CHK"
 /// Special filter value to calue filter values become individual columns that show distribution
-const SPV_PIVOT_DISTRIBUTION="_PVT"
+const SPV_PIVOT_DISTRIBUTION="_DIST"
 
 const decompress = async (url) => {
     // @ts-ignore
@@ -61,6 +61,8 @@ interface IRowInfo {
     values: number[];
 
     promoted_filters: string[];
+
+    pivoted_distribution: Map<string,number>;
 }
 type RowInfo = IRowInfo
 
@@ -96,22 +98,88 @@ function show_description_checkbox() {
     }
 }
 
+function colorize_cell(td: HTMLTableCellElement, q: number, highcontrast: boolean, even_column: boolean) {
+    if (q>1.0) q=1.0;
+    if (q<0.0) q=0.0;
+
+    let qq = 0.5*Math.abs(q-0.5)
+
+    let l
+    if (darkMode) {
+        if (highcontrast) {
+            l=10+70*qq
+        } else {
+            l=0 + 50*qq
+        }
+    } else {
+        if (highcontrast) {
+            l=100.0 - 90*qq
+        } else {
+            l=100
+        }
+    }
+    let c;
+
+    if (darkMode) {
+        if (highcontrast) {
+            c = 400*qq
+        } else {
+            c = 140*qq
+        }
+    } else {
+        if (highcontrast) {
+            c = 240*qq
+        } else {
+            c = 30*qq
+        }
+    }
+    let h;
+    if (even_column) {
+        h= (q>0.5) ? 0 : 210;
+    } else  {
+        h= (q>0.5) ? 70 : 170;
+    }
+    td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
+}
+function colorize_cell_from_white(td: HTMLTableCellElement, q: number, highcontrast: boolean, hue: number) {
+    let l
+    let c
+    if (darkMode) {
+        if (highcontrast) {
+            l=5+50*q
+            c=80*q
+        } else {
+            l=2 + 15*q
+            c=60*q
+        }
+    } else {
+        if (highcontrast) {
+            l=100.0 - 40*q
+            c=40*q
+        } else {
+            l=100 - 3*q
+            c=5*q
+        }
+    }
+    td.setAttribute("style",`background-color: lch(${l} ${c} ${hue})`);
+}
+
 function build_main_table() {
     let url_fragment = []
     let colheads = document.getElementById("column_headers") as HTMLTableRowElement;
 
     colheads.replaceChildren()
 
-    let nvalues = window.content.values.length
-    let values_rowlength = window.content.values_data[0].length
+    let nvalues : number = window.content.values.length
+    let values_rowlength : number = window.content.values_data[0].length
 
-    let value_nums = []
-    let value_denoms = []
+    let value_nums : Array<number> = []
+    let value_denoms : Array<number> = []
 
-    let filter_policies = []
+    let filter_policies : Array<string> = []
 
     let filtered_values = new Array(values_rowlength).fill(0)
-    let highcontrast = []
+    let highcontrast : Array<boolean> = []
 
     let min_denom = (document.getElementById("min_denom") as HTMLInputElement).valueAsNumber
     let ch_col =    (document.getElementById("ch_col") as HTMLInputElement).value
@@ -184,6 +252,7 @@ function build_main_table() {
         }
     }
 
+    let pivoted_columns : string[] = []
     for (const s of window.content.filters) {
         let setting_selector = document.getElementById(`set_${s.name}`) as HTMLOptionElement;
         let sv = setting_selector.value
@@ -216,6 +285,22 @@ function build_main_table() {
             for (const v of s.vals) {
                 let span = document.getElementById(`chk_${s.name}_${v}_id`) as HTMLSpanElement
                 span.setAttribute("style","display: none")
+            }
+        }
+    }
+
+
+    for (const s of window.content.filters) {
+        let setting_selector = document.getElementById(`set_${s.name}`) as HTMLOptionElement;
+        let sv = setting_selector.value
+        if (sv == SPV_PIVOT_DISTRIBUTION) {
+            for (const v of s.vals) {
+                pivoted_columns.push(v);
+    
+                let n = document.createElement("th");
+                n.textContent = v;
+                n.scope="col";
+                colheads.appendChild(n);
             }
         }
     }
@@ -297,12 +382,16 @@ function build_main_table() {
     for (const [row_index, filter_row] of window.content.filters_data.entries()) {
         let promoted_filters = []
         let matches_filter = true
+        let put_into_pivoted_columns : Set<string> = new Set()
         for (let i = 0; i<nfilters; i+=1) {
             let fv = filter_row[i];
             let filter_policy = filter_policies[i]
 
-            if (filter_policy === SPV_ALL || filter_policy === SPV_INTRODUCE_COLUMN || filter_policy === SPV_PIVOT_DISTRIBUTION) {
+            if (filter_policy === SPV_ALL || filter_policy === SPV_INTRODUCE_COLUMN) {
                 // always true
+            } else if (filter_policy == SPV_PIVOT_DISTRIBUTION) {
+                // always true
+                put_into_pivoted_columns.add(fv)
             } else if  (filter_policy === SPV_CHECKBOXES) {
                 // check the checkbox
                 let filter_name = window.content.filters[i].name
@@ -311,7 +400,6 @@ function build_main_table() {
             } else if (filter_policy != fv) {
                 matches_filter = false
             }
-
         }
 
         if (!matches_filter) {
@@ -334,15 +422,25 @@ function build_main_table() {
             cursor = {
                 promoted_filters: promoted_filters,
                 values: new Array(values_rowlength).fill(0),
+                pivoted_distribution: new Map(),
+            }
+            for (const pvc of pivoted_columns) {
+                cursor.pivoted_distribution[pvc] = 0.0;
             }
         }
 
-        let value_row = window.content.values_data[row_index]
+        let value_row : number[] = window.content.values_data[row_index]
 
         for (let j = 0; j<values_rowlength; j+=1) {
             let v = +value_row[j];
             cursor.values[j] += v;
             filtered_values[j] += v;
+        }
+        if (main_denom !== null) {
+            let n = +value_row[main_denom]
+            for (const y of put_into_pivoted_columns) {
+                cursor.pivoted_distribution[y] += n
+            }
         }
         db.set(key, cursor)
     }
@@ -404,6 +502,20 @@ function build_main_table() {
         let ch_max = null
 
         if (main_denom !== null) {
+
+            for (let pvc of pivoted_columns) {
+                let td = document.createElement("td");
+                tr.appendChild(td)
+                let n = rr.pivoted_distribution[pvc];
+                let d = rr.values[main_denom];
+                if (d >= min_denom) {
+                    let xx = n / d;
+                    td.textContent = `${(100*xx).toFixed(2)}`
+                    colorize_cell_from_white(td, xx, true, 130);
+                }
+                td.setAttribute("title", `${n} / ${d}`);
+            }
+
             let td = document.createElement("td");
             let x = rr.values[main_denom]
 
@@ -428,32 +540,13 @@ function build_main_table() {
                 q = 0.0
             }
 
-            let l
-            let c
-            if (darkMode) {
-                if (highcontrast[N_index]) {
-                    l=5+50*q
-                    c=80*q
-                } else {
-                    l=2 + 15*q
-                    c=60*q
-                }
-            } else {
-                if (highcontrast[N_index]) {
-                    l=100.0 - 40*q
-                    c=40*q
-                } else {
-                    l=100 - 3*q
-                    c=5*q
-                }
-            }
-            let h = 190;
-            td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
-
+            colorize_cell_from_white(td, q, highcontrast[N_index], 190);
+            
             tr.appendChild(td)
         }
+ 
         for (let j = 0; j<nvalues; j+=1) {
-            let td = document.createElement("td")
+            let td = document.createElement("td") as HTMLTableCellElement
             
             let num = rr.values[value_nums[j]]
             let denom = rr.values[value_denoms[j]]
@@ -470,47 +563,8 @@ function build_main_table() {
                 td.textContent = `${x.toFixed(2)}`
 
                 let q = (x - mins[j] + 0.000005) / (maxes[j] - mins[j] + 0.00001)
-                if (q>1.0) q=1.0;
-                if (q<0.0) q=0.0;
-
-                let qq = 0.5*Math.abs(q-0.5)
-
-                let l
-                if (darkMode) {
-                    if (highcontrast[j]) {
-                        l=10+70*qq
-                    } else {
-                        l=0 + 50*qq
-                    }
-                } else {
-                    if (highcontrast[j]) {
-                        l=100.0 - 90*qq
-                    } else {
-                        l=100
-                    }
-                }
-                let c;
-
-                if (darkMode) {
-                    if (highcontrast[j]) {
-                        c = 400*qq
-                    } else {
-                        c = 140*qq
-                    }
-                } else {
-                    if (highcontrast[j]) {
-                        c = 240*qq
-                    } else {
-                        c = 30*qq
-                    }
-                }
-                let h;
-                if (j % 2 == 0) {
-                    h= (q>0.5) ? 0 : 210;
-                } else  {
-                    h= (q>0.5) ? 70 : 170;
-                }
-                td.setAttribute("style",`background-color: lch(${l} ${c} ${h})`);
+                
+                colorize_cell(td, q, highcontrast[j], j % 2 == 0);
                 td.setAttribute("title", `${num} / ${denom}`);
             } else {
                 td.textContent = ""
@@ -636,6 +690,9 @@ function build_main_table() {
     for (let j=0; j<promoted_filters_n; j+=1) {
         totperc_row.appendChild(document.createElement("td"))
     }
+    for (let q of pivoted_columns) {
+        totperc_row.appendChild(document.createElement("td"))
+    }
     if (main_denom !== null) {
         let n = document.createElement("td")
         totperc_row.appendChild(n)
@@ -682,6 +739,9 @@ function build_main_table() {
     avgs_row.replaceChildren()
 
     for (let j=0; j<promoted_filters_n; j+=1) {
+        avgs_row.appendChild(document.createElement("td"))
+    }
+    for (let q of pivoted_columns) {
         avgs_row.appendChild(document.createElement("td"))
     }
     if (main_denom !== null) {
@@ -821,10 +881,12 @@ function build_settings_pane() {
         chkbox_opt.textContent = SPV_CHECKBOXES
         slct.appendChild(chkbox_opt)
 
-        let pivot_opts = document.createElement("option")
-        pivot_opts.setAttribute("value", SPV_PIVOT_DISTRIBUTION);
-        pivot_opts.textContent = SPV_PIVOT_DISTRIBUTION
-        slct.appendChild(pivot_opts)
+        if (window.content.main_denom !== null) {
+            let pivot_opts = document.createElement("option")
+            pivot_opts.setAttribute("value", SPV_PIVOT_DISTRIBUTION);
+            pivot_opts.textContent = SPV_PIVOT_DISTRIBUTION
+            slct.appendChild(pivot_opts)
+        }
 
         if (default_values.has(name)) {
             slct.value = default_values.get(name)
