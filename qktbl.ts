@@ -407,7 +407,7 @@ function build_main_table() {
                 // check the checkbox
                 let filter_name = window.content.filters[i].name
                 let chk = document.getElementById(`chk_${filter_name}_${fv}`) as HTMLInputElement;
-                matches_filter = chk && chk.checked
+                matches_filter = matches_filter && chk && chk.checked
             } else if (filter_policy != fv) {
                 matches_filter = false
             }
