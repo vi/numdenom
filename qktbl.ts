@@ -32,6 +32,8 @@ const darkMode = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ??
 const SPV_ALL="*"
 /// Special filter value to cause it to make that filter a column and increase number of rows
 const SPV_INTRODUCE_COLUMN="_COL"
+/// Like "_COL", but used for different column order
+const SPV_INTRODUCE_COLUMN2="_COL2"
 /// Special filter value make more than value of a filter selectiable (and still be mixed together)
 const SPV_CHECKBOXES="_CHK"
 /// Special filter value to calue filter values become individual columns that show distribution
@@ -303,6 +305,15 @@ function build_main_table() {
                 colheads.appendChild(n);
             }
         }
+
+        if (sv === SPV_INTRODUCE_COLUMN2) {
+            let n = document.createElement("th");
+            n.textContent = s.name;
+            n.scope="col";
+            colheads.appendChild(n);
+
+            promoted_filters_n+=1;
+        }
     }
 
     if (main_denom !== null)  {
@@ -387,7 +398,7 @@ function build_main_table() {
             let fv = filter_row[i];
             let filter_policy = filter_policies[i]
 
-            if (filter_policy === SPV_ALL || filter_policy === SPV_INTRODUCE_COLUMN) {
+            if (filter_policy === SPV_ALL || filter_policy === SPV_INTRODUCE_COLUMN || filter_policy === SPV_INTRODUCE_COLUMN2) {
                 // always true
             } else if (filter_policy == SPV_PIVOT_DISTRIBUTION) {
                 // always true
@@ -410,6 +421,13 @@ function build_main_table() {
             let fv = filter_row[i];
             let filter_policy = filter_policies[i]
             if (filter_policy == SPV_INTRODUCE_COLUMN) {
+                promoted_filters.push(fv)
+            }
+        }
+        for (let i = 0; i<nfilters; i+=1) {
+            let fv = filter_row[i];
+            let filter_policy = filter_policies[i]
+            if (filter_policy == SPV_INTRODUCE_COLUMN2) {
                 promoted_filters.push(fv)
             }
         }
@@ -447,21 +465,31 @@ function build_main_table() {
 
     let keys : string[] = [""]
 
-    for (let i = 0; i<nfilters; i+=1) {   
-        if (filter_policies[i] === SPV_INTRODUCE_COLUMN) {
-            let newkeys : string[] = []
-            for (let x of window.content.filters[i].vals) {
-                for (let k of keys) {
-                    if (k.length === 0) {
-                        newkeys.push(x)
-                    } else {
-                        newkeys.push(`${k}|${x}`)
-                    }
+    function add_filter_values_to_keys_set(i: number) {
+        let newkeys : string[] = []
+        for (let x of window.content.filters[i].vals) {
+            for (let k of keys) {
+                if (k.length === 0) {
+                    newkeys.push(x)
+                } else {
+                    newkeys.push(`${k}|${x}`)
                 }
             }
-            keys = newkeys;
+        }
+        keys = newkeys;
+    }
+
+    for (let i = 0; i<nfilters; i+=1) {   
+        if (filter_policies[i] === SPV_INTRODUCE_COLUMN) {
+            add_filter_values_to_keys_set(i)
         }
     }
+    for (let i = 0; i<nfilters; i+=1) {   
+        if (filter_policies[i] === SPV_INTRODUCE_COLUMN2) {
+            add_filter_values_to_keys_set(i)
+        }
+    }
+
 
     //console.log(keys)
 
@@ -887,6 +915,11 @@ function build_settings_pane() {
             pivot_opts.textContent = SPV_PIVOT_DISTRIBUTION
             slct.appendChild(pivot_opts)
         }
+
+        let col2_opt = document.createElement("option")
+        col2_opt.setAttribute("value", SPV_INTRODUCE_COLUMN2);
+        col2_opt.textContent = SPV_INTRODUCE_COLUMN2
+        slct.appendChild(col2_opt)
 
         if (default_values.has(name)) {
             slct.value = default_values.get(name)
